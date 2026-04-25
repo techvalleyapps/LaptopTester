@@ -239,25 +239,25 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 .bat-pct  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.125rem; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); }
 .bat-meta { display:flex; flex-direction:column; gap:.45rem; }
 .bat-row  { display:flex; gap:.75rem; font-size:.8125rem; }
-.bat-lbl  { color:#718096; width:120px; }
+.bat-lbl  { color:#718096; width:140px; }
 .bat-val  { color:#f7fafc; font-weight:500; }
 
-.download-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem; }
-@media(max-width:500px){ .download-grid{ grid-template-columns:1fr; } }
+/* health bar */
+.health-label-row { display:flex; justify-content:space-between; font-size:.8125rem; color:#718096; margin-bottom:.4rem; }
+.health-bar  { height:10px; background:#2d3748; border-radius:9999px; overflow:hidden; margin-bottom:.5rem; }
+.health-fill { height:100%; border-radius:9999px; transition:width .6s; }
+.hf-good { background:linear-gradient(90deg,#276749,#48bb78); }
+.hf-warn { background:linear-gradient(90deg,#975a16,#f6ad55); }
+.hf-poor { background:linear-gradient(90deg,#9b2c2c,#fc8181); }
+.health-msg { font-size:.8125rem; margin-top:.25rem; }
 
-.dl-card {
-  border: 1px solid #2d3748;
-  border-radius: .625rem;
-  padding: 1.125rem;
-  background: #0f1117;
-  display: flex; flex-direction: column; gap: .625rem;
+/* notice box */
+.notice-box {
+  background: #1a2744; border: 1px solid #2b4a8a;
+  border-radius: .625rem; padding: 1rem 1.125rem;
+  font-size: .8125rem; color: #90cdf4; margin-bottom: 1.25rem;
 }
-.dl-card-title { font-size: .9375rem; font-weight: 600; color: #f7fafc; }
-.dl-card-desc  { font-size: .8125rem; color: #718096; flex: 1; }
-
-.steps { list-style: none; padding: 0; margin-top: .625rem; display: flex; flex-direction: column; gap: .4rem; }
-.steps li { font-size: .8125rem; color: #a0aec0; padding-left: 1.25rem; position: relative; }
-.steps li::before { content: attr(data-n); position: absolute; left: 0; color: #63b3ed; font-weight: 700; }
+.notice-box strong { color: #e2e8f0; }
 
 .cmd-box {
   background: #0d1117; border: 1px solid #2d3748; border-radius: .5rem;
@@ -442,8 +442,16 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
   <div id="panel-battery" class="panel">
 
     <div class="card">
-      <div class="card-title">🔋 Live Battery Status</div>
-      <div class="card-desc">Real-time data from your browser's Battery API.</div>
+      <div class="card-title">🔋 Battery Diagnostics</div>
+      <div class="card-desc" id="bat-desc">Reading battery data…</div>
+
+      <!-- notice shown only in browser/GitHub Pages mode -->
+      <div class="notice-box" id="bat-web-notice" style="display:none">
+        <strong>Running in browser.</strong> Only basic data is available here.
+        Download and run <strong>LaptopTester.exe</strong> for full WMI diagnostics — level, chemistry, design capacity, health %, and one-click battery report.
+      </div>
+
+      <!-- Gauge + stats -->
       <div class="bat-overview">
         <div class="bat-icon-wrap">
           <div class="bat-body">
@@ -452,48 +460,28 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
           </div>
           <div class="bat-nub"></div>
         </div>
-        <div class="bat-meta">
+        <div class="bat-meta" id="bat-meta">
+          <div class="bat-row"><span class="bat-lbl">Status</span>         <span class="bat-val" id="bat-status">—</span></div>
           <div class="bat-row"><span class="bat-lbl">Charging</span>       <span class="bat-val" id="bat-charging">—</span></div>
-          <div class="bat-row"><span class="bat-lbl">Time to full</span>    <span class="bat-val" id="bat-chtime">—</span></div>
-          <div class="bat-row"><span class="bat-lbl">Time remaining</span>  <span class="bat-val" id="bat-distime">—</span></div>
-        </div>
-      </div>
-      <p class="text-muted">Note: Battery API availability varies by browser. For precise capacity &amp; health data, use the app below.</p>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📥 Full Battery Test App</div>
-      <div class="card-desc">Download the Windows diagnostic app — it auto-reads design capacity, full charge capacity, calculates health, and generates the official Windows battery report. No copy-pasting needed.</div>
-
-      <div class="download-grid">
-        <div class="dl-card">
-          <div class="dl-card-title">🟦 Option A — Easy (Recommended)</div>
-          <div class="dl-card-desc">Double-click the .bat file. It automatically requests Administrator rights and launches the tester.</div>
-          <a class="btn btn-download" href="./RunBatteryTest.bat" download>⬇ RunBatteryTest.bat</a>
-          <ol class="steps">
-            <li data-n="1">Download the .bat file</li>
-            <li data-n="2">Double-click it</li>
-            <li data-n="3">Click Yes on the UAC prompt</li>
-          </ol>
-        </div>
-        <div class="dl-card">
-          <div class="dl-card-title">⚙️ Option B — PowerShell Script</div>
-          <div class="dl-card-desc">If you prefer to run PowerShell directly or inspect the script first.</div>
-          <a class="btn btn-download" href="./BatteryTest.ps1" download>⬇ BatteryTest.ps1</a>
-          <ol class="steps">
-            <li data-n="1">Download the .ps1 file</li>
-            <li data-n="2">Right-click → Run with PowerShell</li>
-            <li data-n="3">Allow Administrator if prompted</li>
-          </ol>
+          <div class="bat-row"><span class="bat-lbl">Time remaining</span> <span class="bat-val" id="bat-distime">—</span></div>
+          <div class="bat-row" id="bat-row-chem"   style="display:none"><span class="bat-lbl">Chemistry</span>      <span class="bat-val" id="bat-chem">—</span></div>
+          <div class="bat-row" id="bat-row-device" style="display:none"><span class="bat-lbl">Device</span>         <span class="bat-val" id="bat-device">—</span></div>
         </div>
       </div>
 
-      <p class="text-muted">The app shows: charge level · battery status · design capacity · full charge capacity · health % · and generates a full <code style="color:#76e4f7">powercfg /batteryreport</code> with one keypress.</p>
+      <!-- Capacity & Health (populated by JS when data available) -->
+      <div id="bat-health-wrap"></div>
+
+      <!-- Action buttons -->
+      <div class="flex-row" style="margin-top:1.25rem">
+        <button class="btn btn-secondary" onclick="refreshBattery()">🔄 Refresh</button>
+        <button class="btn btn-primary" id="btn-report" style="display:none" onclick="runBatteryReport()">📄 Generate Battery Report</button>
+      </div>
     </div>
 
     <div class="card">
       <div class="card-title">💻 Quick Commands</div>
-      <div class="card-desc">Copy and run in PowerShell or Command Prompt as Administrator.</div>
+      <div class="card-desc">Copy and run in PowerShell or CMD as Administrator.</div>
 
       <div class="cmd-desc">Full battery report (saves HTML to your profile):</div>
       <div class="cmd-box">
@@ -501,19 +489,13 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
         <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Energy efficiency scan (~60 s):</div>
-      <div class="cmd-box">
-        <code>powercfg /energy</code>
-        <button class="copy-btn" onclick="copyText(this,'powercfg /energy')">Copy</button>
-      </div>
-
-      <div class="cmd-desc">Design capacity via PowerShell:</div>
+      <div class="cmd-desc">Design capacity (PowerShell):</div>
       <div class="cmd-box">
         <code>(Get-WmiObject -Class BatteryStaticData -Namespace root\wmi).DesignedCapacity</code>
         <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryStaticData -Namespace root\\wmi).DesignedCapacity')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Full charge capacity via PowerShell:</div>
+      <div class="cmd-desc">Full charge capacity (PowerShell):</div>
       <div class="cmd-box">
         <code>(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\wmi).FullChargedCapacity</code>
         <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\\wmi).FullChargedCapacity')">Copy</button>
@@ -792,42 +774,150 @@ function stopAll() {
 /* ══════════════════════════════════════
    BATTERY TEST
 ══════════════════════════════════════ */
-function fmtBatTime(s) {
-  if (!isFinite(s) || s <= 0) return '—';
-  if (s === 0) return 'Full';
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-  return (h ? h + 'h ' : '') + m + 'm';
+const chemNames = {
+  1:'Other', 2:'Unknown', 3:'Lead Acid', 4:'Nickel Cadmium',
+  5:'Nickel Metal Hydride', 6:'Lithium-Ion', 7:'Zinc Air', 8:'Lithium Polymer'
+};
+const statusNames = {
+  1:'Other', 2:'Unknown', 3:'Fully Charged', 4:'Low', 5:'Critical',
+  6:'Charging', 7:'Charging (High)', 8:'Charging (Low)', 9:'Charging (Critical)',
+  10:'Undefined', 11:'Partially Charged'
+};
+
+function setBatteryGauge(lvl) {
+  const fill = document.getElementById('bat-fill');
+  fill.style.width = lvl + '%';
+  fill.style.background = lvl > 50
+    ? 'linear-gradient(90deg,#276749,#48bb78)'
+    : lvl > 20
+      ? 'linear-gradient(90deg,#975a16,#f6ad55)'
+      : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+  document.getElementById('bat-pct').textContent = lvl + '%';
 }
 
-async function initBattery() {
+function renderHealth(designCap, fullCap) {
+  const health    = Math.min(100, Math.round((fullCap / designCap) * 100));
+  const fillCls   = health >= 80 ? 'hf-good' : health >= 60 ? 'hf-warn' : 'hf-poor';
+  const color     = health >= 80 ? '#68d391' : health >= 60 ? '#f6ad55' : '#fc8181';
+  const msg       = health >= 80 ? '✅ Good — battery is healthy'
+                  : health >= 60 ? '⚠️ Fair — consider replacing soon'
+                  :                '❌ Poor — replacement recommended';
+  document.getElementById('bat-health-wrap').innerHTML = `
+    <div class="section-label" style="margin-top:1.25rem">Capacity &amp; Health</div>
+    <table class="info-table" style="margin-bottom:1rem">
+      <tr><td>Design Capacity</td>      <td>${designCap.toLocaleString()} mWh</td></tr>
+      <tr><td>Full Charge Capacity</td> <td>${fullCap.toLocaleString()} mWh</td></tr>
+    </table>
+    <div class="health-label-row">
+      <span>Battery Health</span>
+      <span style="color:${color};font-weight:700">${health}%</span>
+    </div>
+    <div class="health-bar">
+      <div class="health-fill ${fillCls}" style="width:${health}%"></div>
+    </div>
+    <p class="health-msg" style="color:${color}">${msg}</p>`;
+}
+
+// ── Electron path (full WMI data) ─────────────────────────────────────────────
+async function loadElectronBattery() {
+  document.getElementById('bat-desc').textContent = 'Reading WMI battery data…';
+  try {
+    const d = await window.electronAPI.getBattery();
+
+    // Level
+    if (d.level !== undefined) setBatteryGauge(d.level);
+
+    // Status / charging
+    document.getElementById('bat-status').textContent   = statusNames[d.status] || 'Unknown';
+    document.getElementById('bat-charging').innerHTML   =
+      (d.status === 6 || d.status === 7 || d.status === 8 || d.status === 9)
+        ? '<span class="text-green">⚡ Yes</span>' : 'No';
+
+    // Run time
+    const rt = d.runTime;
+    document.getElementById('bat-distime').textContent  =
+      (rt && rt > 0) ? (Math.floor(rt/60) + 'h ' + (rt%60) + 'm') : '—';
+
+    // Chemistry + device (Electron-only rows)
+    document.getElementById('bat-chem').textContent    = chemNames[d.chem]  || 'Unknown';
+    document.getElementById('bat-device').textContent  = d.name || '—';
+    document.getElementById('bat-row-chem').style.display   = 'flex';
+    document.getElementById('bat-row-device').style.display = 'flex';
+
+    // Health
+    if (d.designCap && d.fullCap && d.designCap > 0) {
+      renderHealth(d.designCap, d.fullCap);
+    } else {
+      const why = d.designErr || d.fullErr || 'WMI data unavailable';
+      document.getElementById('bat-health-wrap').innerHTML =
+        `<div class="section-label" style="margin-top:1.25rem">Capacity &amp; Health</div>
+         <p class="text-muted">${esc(why)} — ensure the app is running as Administrator.</p>`;
+    }
+
+    document.getElementById('bat-desc').textContent = 'Live data from Windows WMI.';
+    document.getElementById('btn-report').style.display = 'inline-flex';
+
+  } catch(e) {
+    document.getElementById('bat-desc').innerHTML =
+      `<span class="text-red">Error reading battery data: ${esc(e.message)}</span>`;
+  }
+}
+
+// ── Browser / GitHub Pages path (Battery API) ─────────────────────────────────
+async function loadWebBattery() {
+  document.getElementById('bat-web-notice').style.display = 'block';
+  document.getElementById('bat-desc').textContent = 'Basic data from browser Battery API.';
+  document.getElementById('bat-status').textContent = 'N/A (browser limitation)';
+
   if (!('getBattery' in navigator)) {
-    document.getElementById('bat-pct').textContent     = 'N/A';
-    document.getElementById('bat-charging').textContent = 'Battery API not supported in this browser';
+    document.getElementById('bat-pct').textContent = 'N/A';
+    document.getElementById('bat-charging').textContent = 'Battery API not supported';
     return;
   }
   try {
     const bat = await navigator.getBattery();
-    const update = () => {
-      const lvl  = Math.round(bat.level * 100);
-      const fill = document.getElementById('bat-fill');
-      fill.style.width = lvl + '%';
-      fill.style.background = lvl > 50
-        ? 'linear-gradient(90deg,#276749,#48bb78)'
-        : lvl > 20
-          ? 'linear-gradient(90deg,#975a16,#f6ad55)'
-          : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
-      document.getElementById('bat-pct').textContent      = lvl + '%';
-      document.getElementById('bat-charging').innerHTML   = bat.charging
+    const upd = () => {
+      const lvl = Math.round(bat.level * 100);
+      setBatteryGauge(lvl);
+      document.getElementById('bat-status').textContent = '—';
+      document.getElementById('bat-charging').innerHTML = bat.charging
         ? '<span class="text-green">⚡ Charging</span>' : '🔋 Discharging';
-      document.getElementById('bat-chtime').textContent   = fmtBatTime(bat.chargingTime);
-      document.getElementById('bat-distime').textContent  = fmtBatTime(bat.dischargingTime);
+      const dt = bat.dischargingTime;
+      document.getElementById('bat-distime').textContent =
+        (!isFinite(dt) || dt <= 0) ? '—' :
+        (Math.floor(dt/3600) + 'h ' + Math.floor((dt%3600)/60) + 'm');
     };
-    update();
-    ['chargingchange','levelchange','chargingtimechange','dischargingtimechange'].forEach(ev =>
-      bat.addEventListener(ev, update));
+    upd();
+    ['chargingchange','levelchange','chargingtimechange','dischargingtimechange']
+      .forEach(ev => bat.addEventListener(ev, upd));
   } catch(e) {
     document.getElementById('bat-charging').textContent = 'Error: ' + e.message;
   }
+}
+
+async function initBattery() {
+  if (window.electronAPI && window.electronAPI.isElectron) {
+    await loadElectronBattery();
+  } else {
+    await loadWebBattery();
+  }
+}
+
+async function refreshBattery() {
+  document.getElementById('bat-health-wrap').innerHTML = '';
+  await initBattery();
+}
+
+async function runBatteryReport() {
+  const btn = document.getElementById('btn-report');
+  btn.disabled = true; btn.textContent = '⏳ Generating…';
+  try {
+    const r = await window.electronAPI.batteryReport();
+    btn.textContent = r.success ? '✅ Report Opened' : '❌ ' + (r.error || 'Failed');
+  } catch(e) {
+    btn.textContent = '❌ Error';
+  }
+  setTimeout(() => { btn.textContent = '📄 Generate Battery Report'; btn.disabled = false; }, 3000);
 }
 
 function copyText(btn, text) {
