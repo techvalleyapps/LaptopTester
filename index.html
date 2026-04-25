@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaptopTester — Hardware Diagnostic Tool</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f1117;
+  color: #e2e8f0;
+  min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+  background: #1a1f2e;
+  border-bottom: 1px solid #2d3748;
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.header-logo { font-size: 1.75rem; }
+.header-title { font-size: 1.375rem; font-weight: 700; color: #63b3ed; }
+.header-sub  { font-size: 0.8125rem; color: #718096; margin-top: 0.15rem; }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  background: #1a1f2e;
+  border-bottom: 1px solid #2d3748;
+  padding: 0 1.5rem;
+  gap: 0.25rem;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 0.75rem 1.375rem;
+  border: none;
+  background: transparent;
+  color: #718096;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.tab-btn:hover { color: #e2e8f0; }
+.tab-btn.active { color: #63b3ed; border-bottom-color: #63b3ed; }
+
+/* ── Content ── */
+.content { max-width: 1100px; margin: 0 auto; padding: 1.75rem 1.5rem; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: #1a1f2e;
+  border: 1px solid #2d3748;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.card-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #f7fafc;
+  margin-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-desc { font-size: 0.8125rem; color: #718096; margin-bottom: 1.25rem; }
+
+/* ── Buttons ── */
+.btn {
+  padding: 0.45rem 1.1rem;
+  border: none;
+  border-radius: 0.45rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary   { background: #3182ce; color: #fff; }
+.btn-primary:hover   { background: #2b6cb0; }
+.btn-success   { background: #2f855a; color: #fff; }
+.btn-success:hover   { background: #276749; }
+.btn-danger    { background: #c53030; color: #fff; }
+.btn-danger:hover    { background: #9b2c2c; }
+.btn-secondary { background: #2d3748; color: #e2e8f0; border: 1px solid #4a5568; }
+.btn-secondary:hover { background: #4a5568; }
+.btn-link { background: transparent; color: #63b3ed; border: 1px solid #2d3748; }
+.btn-link:hover { background: #2d3748; }
+
+.flex-row { display: flex; gap: 0.625rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+
+/* ─────────────────────────────────────
+   KEYBOARD TEST
+───────────────────────────────────── */
+.kb-stats {
+  display: flex;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.875rem;
+}
+.badge {
+  padding: 0.25rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-blue  { background: #1a365d; color: #90cdf4; }
+.badge-green { background: #1c4532; color: #68d391; }
+.badge-gray  { background: #2d3748; color: #a0aec0; border: 1px solid #4a5568; }
+
+.last-key {
+  padding: 0.625rem 0.875rem;
+  background: #0f1117;
+  border: 1px solid #2d3748;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  color: #718096;
+  margin-bottom: 1rem;
+  min-height: 38px;
+}
+
+.kb-scroll { overflow-x: auto; padding-bottom: 0.5rem; }
+.keyboard  { display: inline-flex; flex-direction: column; gap: 4px; }
+.kb-row    { display: flex; gap: 4px; align-items: flex-start; }
+
+.key {
+  height: 40px;
+  min-width: 40px;
+  border-radius: 5px;
+  border: 1px solid #4a5568;
+  background: #2d3748;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  line-height: 1.2;
+  color: #a0aec0;
+  user-select: none;
+  padding: 2px 4px;
+  text-align: center;
+  transition: background 0.08s, border-color 0.08s, transform 0.06s;
+}
+.key.pressed {
+  background: #2b6cb0;
+  border-color: #63b3ed;
+  color: #fff;
+  transform: scale(0.93);
+}
+.key.tested {
+  background: #1c4532;
+  border-color: #48bb78;
+  color: #68d391;
+}
+.key.pressed.tested {
+  background: #2b6cb0;
+  border-color: #63b3ed;
+  color: #fff;
+}
+
+/* key widths */
+.w-escape    { min-width: 52px; }
+.w-backspace { min-width: 82px; }
+.w-tab       { min-width: 68px; }
+.w-backslash { min-width: 58px; }
+.w-caps      { min-width: 78px; }
+.w-enter     { min-width: 88px; }
+.w-shiftl    { min-width: 108px; }
+.w-shiftr    { min-width: 108px; }
+.w-ctrl      { min-width: 58px; }
+.w-win       { min-width: 52px; }
+.w-alt       { min-width: 52px; }
+.w-space     { min-width: 290px; }
+.w-gap       { min-width: 16px; background: transparent !important; border: none !important; }
+.w-numenter  { height: 84px; min-width: 40px; }
+
+/* ─────────────────────────────────────
+   CAMERA TEST
+───────────────────────────────────── */
+.camera-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 640px) { .camera-grid { grid-template-columns: 1fr; } }
+
+.cam-preview {
+  background: #0f1117;
+  border: 1px solid #2d3748;
+  border-radius: 0.625rem;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cam-preview video { width: 100%; height: 100%; object-fit: cover; display: none; }
+.cam-placeholder   { text-align: center; color: #4a5568; padding: 1rem; }
+.cam-placeholder svg { width: 52px; height: 52px; margin-bottom: 0.5rem; }
+
+.info-table { width: 100%; border-collapse: collapse; }
+.info-table tr { border-bottom: 1px solid #2d3748; }
+.info-table tr:last-child { border-bottom: none; }
+.info-table td { padding: 0.5rem 0; font-size: 0.8125rem; }
+.info-table td:first-child { color: #718096; width: 40%; }
+.info-table td:last-child  { color: #f7fafc; font-weight: 500; word-break: break-all; }
+
+/* ─────────────────────────────────────
+   SOUND TEST
+───────────────────────────────────── */
+.channel-row { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+.ch-btn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #2d3748;
+  border-radius: 0.45rem;
+  background: #0f1117;
+  color: #718096;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.15s;
+}
+.ch-btn.active { background: #1a365d; border-color: #3182ce; color: #90cdf4; }
+
+.vol-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.vol-row label { font-size: 0.8125rem; color: #718096; white-space: nowrap; }
+input[type="range"] { flex: 1; accent-color: #3182ce; cursor: pointer; }
+
+.freq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.freq-card {
+  padding: 1rem 0.75rem;
+  border: 1px solid #2d3748;
+  border-radius: 0.625rem;
+  background: #0f1117;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.freq-card:hover { border-color: #63b3ed; background: #1a2744; }
+.freq-card.playing { border-color: #48bb78; background: #1c3a28; }
+.freq-card .fc-icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.freq-card .fc-name { font-size: 0.875rem; font-weight: 600; color: #e2e8f0; }
+.freq-card .fc-hz   { font-size: 0.6875rem; color: #718096; margin-top: 0.15rem; }
+.freq-card.playing .fc-name { color: #68d391; }
+
+.custom-tone-box {
+  background: #0f1117;
+  border: 1px solid #2d3748;
+  border-radius: 0.625rem;
+  padding: 1.125rem;
+}
+.custom-tone-box h3 { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.875rem; color: #f7fafc; }
+.form-row { display: flex; gap: 0.875rem; flex-wrap: wrap; align-items: flex-end; }
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group label { font-size: 0.75rem; color: #718096; }
+.form-input, .form-select {
+  padding: 0.45rem 0.75rem;
+  background: #1a1f2e;
+  border: 1px solid #2d3748;
+  border-radius: 0.45rem;
+  color: #e2e8f0;
+  font-size: 0.8125rem;
+}
+.form-input { width: 110px; }
+.form-input:focus, .form-select:focus { outline: none; border-color: #3182ce; }
+
+/* ─────────────────────────────────────
+   BATTERY TEST
+───────────────────────────────────── */
+.bat-overview {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.bat-icon-wrap {
+  position: relative;
+  width: 130px;
+  height: 62px;
+  flex-shrink: 0;
+}
+.bat-body {
+  width: 118px; height: 62px;
+  border: 3px solid #4a5568;
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+}
+.bat-nub {
+  position: absolute;
+  right: -10px; top: 50%;
+  transform: translateY(-50%);
+  width: 9px; height: 22px;
+  background: #4a5568;
+  border-radius: 0 4px 4px 0;
+}
+.bat-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f855a, #48bb78);
+  transition: width 0.6s ease;
+}
+.bat-pct {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+.bat-meta { display: flex; flex-direction: column; gap: 0.45rem; }
+.bat-row  { display: flex; gap: 0.75rem; font-size: 0.8125rem; }
+.bat-label { color: #718096; width: 110px; }
+.bat-val   { color: #f7fafc; font-weight: 500; }
+
+.health-section { margin-top: 1rem; }
+.health-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: #718096;
+  margin-bottom: 0.4rem;
+}
+.health-bar {
+  height: 10px;
+  background: #2d3748;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+.health-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+.hf-good { background: linear-gradient(90deg, #276749, #48bb78); }
+.hf-warn { background: linear-gradient(90deg, #975a16, #f6ad55); }
+.hf-poor { background: linear-gradient(90deg, #9b2c2c, #fc8181); }
+.health-msg { font-size: 0.8125rem; margin-top: 0.25rem; }
+
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+@media (max-width: 420px) { .calc-grid { grid-template-columns: 1fr; } }
+
+.cmd-box {
+  background: #0d1117;
+  border: 1px solid #2d3748;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.cmd-box code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.8125rem;
+  color: #76e4f7;
+  word-break: break-all;
+}
+.copy-btn {
+  flex-shrink: 0;
+  padding: 0.25rem 0.6rem;
+  background: #2d3748;
+  border: 1px solid #4a5568;
+  border-radius: 0.375rem;
+  color: #a0aec0;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.copy-btn:hover { background: #4a5568; color: #f7fafc; }
+
+.cmd-desc { font-size: 0.75rem; color: #718096; margin-bottom: 0.4rem; }
+
+/* ── Utility ── */
+.text-green  { color: #68d391; }
+.text-yellow { color: #f6ad55; }
+.text-red    { color: #fc8181; }
+.text-muted  { color: #718096; font-size: 0.8125rem; }
+.mt-sm { margin-top: 0.5rem; }
+.mt-md { margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- ════════ HEADER ════════ -->
+<div class="header">
+  <span class="header-logo">🔧</span>
+  <div>
+    <div class="header-title">LaptopTester</div>
+    <div class="header-sub">Keyboard · Camera · Sound · Battery — all in your browser</div>
+  </div>
+</div>
+
+<!-- ════════ TABS ════════ -->
+<div class="tabs" id="tab-bar">
+  <button class="tab-btn active" data-tab="keyboard">⌨️ Keyboard</button>
+  <button class="tab-btn"        data-tab="camera">📷 Camera</button>
+  <button class="tab-btn"        data-tab="sound">🔊 Sound</button>
+  <button class="tab-btn"        data-tab="battery">🔋 Battery</button>
+</div>
+
+<div class="content">
+
+  <!-- ══════════════════════════════════
+       KEYBOARD PANEL
+  ══════════════════════════════════ -->
+  <div id="panel-keyboard" class="panel active">
+    <div class="card">
+      <div class="card-title">⌨️ Keyboard Test</div>
+      <div class="card-desc">Press every key — it turns green once tested. Blue = currently held.</div>
+
+      <div class="flex-row">
+        <button class="btn btn-secondary" onclick="resetKeyboard()">↺ Reset</button>
+      </div>
+
+      <div class="kb-stats">
+        <span class="badge badge-blue"  id="kb-tested">Tested: 0</span>
+        <span class="badge badge-gray"  id="kb-total">Total: 0</span>
+        <span class="badge badge-green" id="kb-pct">0%</span>
+      </div>
+
+      <div class="last-key" id="last-key">Press any key…</div>
+
+      <div class="kb-scroll">
+        <div class="keyboard" id="keyboard"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       CAMERA PANEL
+  ══════════════════════════════════ -->
+  <div id="panel-camera" class="panel">
+    <div class="card">
+      <div class="card-title">📷 Camera Test</div>
+      <div class="card-desc">Preview your webcam live and inspect device details.</div>
+
+      <div class="flex-row">
+        <button class="btn btn-primary"   id="cam-start" onclick="startCamera()">▶ Start Camera</button>
+        <button class="btn btn-danger"    id="cam-stop"  onclick="stopCamera()" style="display:none">⏹ Stop</button>
+        <select class="form-select"       id="cam-select" onchange="switchCamera()" style="display:none"></select>
+      </div>
+
+      <div class="camera-grid">
+        <div>
+          <div class="cam-preview" id="cam-preview">
+            <div class="cam-placeholder" id="cam-placeholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                <rect x="2" y="7" width="15" height="11" rx="2"/>
+                <path d="M17 10l4-2v8l-4-2"/>
+              </svg>
+              <div style="font-size:0.8125rem">Camera not started</div>
+            </div>
+            <video id="cam-video" autoplay playsinline muted></video>
+          </div>
+        </div>
+
+        <div>
+          <table class="info-table">
+            <tr><td>Status</td>     <td id="ci-status">—</td></tr>
+            <tr><td>Device</td>     <td id="ci-device">—</td></tr>
+            <tr><td>Resolution</td> <td id="ci-res">—</td></tr>
+            <tr><td>Frame Rate</td> <td id="ci-fps">—</td></tr>
+            <tr><td>Aspect Ratio</td><td id="ci-aspect">—</td></tr>
+            <tr><td>Facing Mode</td><td id="ci-facing">—</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SOUND PANEL
+  ══════════════════════════════════ -->
+  <div id="panel-sound" class="panel">
+    <div class="card">
+      <div class="card-title">🔊 Sound Test</div>
+      <div class="card-desc">Tap a frequency card to play/stop that tone. Uses the Web Audio API — no downloads.</div>
+
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:1.25rem;align-items:start;margin-bottom:1.25rem;">
+        <div>
+          <div class="text-muted" style="margin-bottom:0.4rem">Channel</div>
+          <div class="channel-row" style="margin-bottom:0">
+            <button class="ch-btn active" id="ch-both"  onclick="setChannel('both')">Both</button>
+            <button class="ch-btn"        id="ch-left"  onclick="setChannel('left')">◀ Left</button>
+            <button class="ch-btn"        id="ch-right" onclick="setChannel('right')">Right ▶</button>
+          </div>
+        </div>
+        <div>
+          <div class="text-muted" style="margin-bottom:0.4rem">Volume</div>
+          <div class="vol-row" style="margin-bottom:0">
+            <label>🔈</label>
+            <input type="range" id="vol-slider" min="0" max="100" value="55" oninput="setVolume(this.value)">
+            <label id="vol-label" style="min-width:36px">55%</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="freq-grid">
+        <div class="freq-card" id="fc-bass"    onclick="toggleTone('bass',80)">
+          <div class="fc-icon">🔉</div>
+          <div class="fc-name">Bass</div>
+          <div class="fc-hz">80 Hz</div>
+        </div>
+        <div class="freq-card" id="fc-lowmid"  onclick="toggleTone('lowmid',300)">
+          <div class="fc-icon">🎵</div>
+          <div class="fc-name">Low Mids</div>
+          <div class="fc-hz">300 Hz</div>
+        </div>
+        <div class="freq-card" id="fc-mid"     onclick="toggleTone('mid',1000)">
+          <div class="fc-icon">🎶</div>
+          <div class="fc-name">Mids</div>
+          <div class="fc-hz">1 000 Hz</div>
+        </div>
+        <div class="freq-card" id="fc-highmid" onclick="toggleTone('highmid',3000)">
+          <div class="fc-icon">🎼</div>
+          <div class="fc-name">High Mids</div>
+          <div class="fc-hz">3 000 Hz</div>
+        </div>
+        <div class="freq-card" id="fc-treble"  onclick="toggleTone('treble',8000)">
+          <div class="fc-icon">🔔</div>
+          <div class="fc-name">Treble</div>
+          <div class="fc-hz">8 000 Hz</div>
+        </div>
+        <div class="freq-card" id="fc-white"   onclick="toggleNoise()">
+          <div class="fc-icon">📻</div>
+          <div class="fc-name">White Noise</div>
+          <div class="fc-hz">Full spectrum</div>
+        </div>
+      </div>
+
+      <div class="custom-tone-box">
+        <h3>🎛️ Custom Tone Generator</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Frequency (20–20 000 Hz)</label>
+            <input type="number" id="ct-freq" class="form-input" value="440" min="20" max="20000">
+          </div>
+          <div class="form-group">
+            <label>Wave type</label>
+            <select id="ct-wave" class="form-select">
+              <option value="sine">Sine</option>
+              <option value="square">Square</option>
+              <option value="sawtooth">Sawtooth</option>
+              <option value="triangle">Triangle</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <div style="display:flex;gap:0.5rem">
+              <button class="btn btn-primary" id="ct-btn" onclick="toggleCustom()">▶ Play</button>
+              <button class="btn btn-secondary" onclick="stopAll()">⏹ Stop All</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       BATTERY PANEL
+  ══════════════════════════════════ -->
+  <div id="panel-battery" class="panel">
+
+    <div class="card">
+      <div class="card-title">🔋 Live Battery Status</div>
+      <div class="card-desc">Real-time data from your browser's Battery API.</div>
+
+      <div class="bat-overview">
+        <div class="bat-icon-wrap">
+          <div class="bat-body">
+            <div class="bat-fill" id="bat-fill" style="width:0%"></div>
+            <div class="bat-pct"  id="bat-pct">—</div>
+          </div>
+          <div class="bat-nub"></div>
+        </div>
+        <div class="bat-meta">
+          <div class="bat-row"><span class="bat-label">Charging</span>      <span class="bat-val" id="bat-charging">—</span></div>
+          <div class="bat-row"><span class="bat-label">Time to full</span>   <span class="bat-val" id="bat-chtime">—</span></div>
+          <div class="bat-row"><span class="bat-label">Time remaining</span> <span class="bat-val" id="bat-distime">—</span></div>
+        </div>
+      </div>
+      <p class="text-muted">Note: Battery API availability varies by browser and OS. For precise data use the Windows report below.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🩺 Battery Health Calculator</div>
+      <div class="card-desc">Run the Windows battery report, then paste the capacity values below.</div>
+
+      <div class="cmd-desc">Run in PowerShell or CMD (as Administrator):</div>
+      <div class="cmd-box">
+        <code>powercfg /batteryreport /output "%USERPROFILE%\battery-report.html"</code>
+        <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
+      </div>
+      <p class="text-muted mt-sm" style="margin-bottom:1rem">Open the generated HTML file → look for <strong style="color:#90cdf4">DESIGN CAPACITY</strong> and <strong style="color:#90cdf4">FULL CHARGE CAPACITY</strong>.</p>
+
+      <div class="calc-grid">
+        <div class="form-group">
+          <label>Design Capacity (mWh)</label>
+          <input type="number" id="cap-design" class="form-input" style="width:100%" placeholder="e.g. 45000" oninput="calcHealth()">
+        </div>
+        <div class="form-group">
+          <label>Full Charge Capacity (mWh)</label>
+          <input type="number" id="cap-full" class="form-input" style="width:100%" placeholder="e.g. 38500" oninput="calcHealth()">
+        </div>
+      </div>
+
+      <div id="health-result" style="display:none">
+        <div class="health-section">
+          <div class="health-label-row">
+            <span>Battery Health</span>
+            <span id="health-pct">—</span>
+          </div>
+          <div class="health-bar">
+            <div class="health-fill" id="health-fill" style="width:0%"></div>
+          </div>
+          <div class="health-msg" id="health-msg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💻 Useful Commands</div>
+      <div class="card-desc">Copy and run in PowerShell or Command Prompt.</div>
+
+      <div class="cmd-desc">Battery report (saves to your profile folder):</div>
+      <div class="cmd-box">
+        <code>powercfg /batteryreport</code>
+        <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport')">Copy</button>
+      </div>
+
+      <div class="cmd-desc">Energy efficiency diagnostic (~60-second scan):</div>
+      <div class="cmd-box">
+        <code>powercfg /energy</code>
+        <button class="copy-btn" onclick="copyText(this,'powercfg /energy')">Copy</button>
+      </div>
+
+      <div class="cmd-desc">Battery info via PowerShell:</div>
+      <div class="cmd-box">
+        <code>Get-WmiObject Win32_Battery | Select-Object *</code>
+        <button class="copy-btn" onclick="copyText(this,'Get-WmiObject Win32_Battery | Select-Object *')">Copy</button>
+      </div>
+
+      <div class="cmd-desc">Design vs full charge capacity (PowerShell):</div>
+      <div class="cmd-box">
+        <code>(Get-WmiObject -Class BatteryStaticData -Namespace root\wmi).DesignedCapacity</code>
+        <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryStaticData -Namespace root\\wmi).DesignedCapacity')">Copy</button>
+      </div>
+    </div>
+
+  </div><!-- /panel-battery -->
+
+</div><!-- /content -->
+
+<!-- ════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ─── Tab navigation ─── */
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+});
+
+/* ══════════════════════════════════════
+   KEYBOARD TEST
+══════════════════════════════════════ */
+const keyLayout = [
+  // Row 0 — Function row
+  [
+    {c:'Escape',      l:'Esc',        w:'w-escape'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'F1',l:'F1'},{c:'F2',l:'F2'},{c:'F3',l:'F3'},{c:'F4',l:'F4'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'F5',l:'F5'},{c:'F6',l:'F6'},{c:'F7',l:'F7'},{c:'F8',l:'F8'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'F9',l:'F9'},{c:'F10',l:'F10'},{c:'F11',l:'F11'},{c:'F12',l:'F12'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'PrintScreen',l:'PrtSc'},{c:'ScrollLock',l:'ScrLk'},{c:'Pause',l:'Pause'},
+  ],
+  // Row 1 — Number row
+  [
+    {c:'Backquote',l:'`~'},{c:'Digit1',l:'1!'},{c:'Digit2',l:'2@'},
+    {c:'Digit3',l:'3#'},{c:'Digit4',l:'4$'},{c:'Digit5',l:'5%'},
+    {c:'Digit6',l:'6^'},{c:'Digit7',l:'7&'},{c:'Digit8',l:'8*'},
+    {c:'Digit9',l:'9('},{c:'Digit0',l:'0)'},{c:'Minus',l:'-_'},
+    {c:'Equal',l:'=+'},{c:'Backspace',l:'⌫ Backspace',w:'w-backspace'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Insert',l:'Ins'},{c:'Home',l:'Home'},{c:'PageUp',l:'PgUp'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'NumLock',l:'Num'},{c:'NumpadDivide',l:'/'},{c:'NumpadMultiply',l:'×'},{c:'NumpadSubtract',l:'−'},
+  ],
+  // Row 2 — QWERTY
+  [
+    {c:'Tab',l:'Tab',w:'w-tab'},
+    {c:'KeyQ',l:'Q'},{c:'KeyW',l:'W'},{c:'KeyE',l:'E'},{c:'KeyR',l:'R'},
+    {c:'KeyT',l:'T'},{c:'KeyY',l:'Y'},{c:'KeyU',l:'U'},{c:'KeyI',l:'I'},
+    {c:'KeyO',l:'O'},{c:'KeyP',l:'P'},{c:'BracketLeft',l:'[{'},{c:'BracketRight',l:']}'},
+    {c:'Backslash',l:'\\|',w:'w-backslash'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Delete',l:'Del'},{c:'End',l:'End'},{c:'PageDown',l:'PgDn'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Numpad7',l:'7'},{c:'Numpad8',l:'8'},{c:'Numpad9',l:'9'},{c:'NumpadAdd',l:'+',w:'w-numenter'},
+  ],
+  // Row 3 — ASDF
+  [
+    {c:'CapsLock',l:'Caps Lock',w:'w-caps'},
+    {c:'KeyA',l:'A'},{c:'KeyS',l:'S'},{c:'KeyD',l:'D'},{c:'KeyF',l:'F'},
+    {c:'KeyG',l:'G'},{c:'KeyH',l:'H'},{c:'KeyJ',l:'J'},{c:'KeyK',l:'K'},
+    {c:'KeyL',l:'L'},{c:'Semicolon',l:';:'},{c:'Quote',l:'\'"'},
+    {c:'Enter',l:'Enter ↵',w:'w-enter'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Numpad4',l:'4'},{c:'Numpad5',l:'5'},{c:'Numpad6',l:'6'},
+  ],
+  // Row 4 — ZXCV
+  [
+    {c:'ShiftLeft',l:'⇧ Shift',w:'w-shiftl'},
+    {c:'KeyZ',l:'Z'},{c:'KeyX',l:'X'},{c:'KeyC',l:'C'},{c:'KeyV',l:'V'},
+    {c:'KeyB',l:'B'},{c:'KeyN',l:'N'},{c:'KeyM',l:'M'},{c:'Comma',l:',<'},
+    {c:'Period',l:'.>'},{c:'Slash',l:'/?'},
+    {c:'ShiftRight',l:'⇧ Shift',w:'w-shiftr'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'_g',l:'',w:'w-gap'},{c:'ArrowUp',l:'↑'},{c:'_g',l:'',w:'w-gap'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Numpad1',l:'1'},{c:'Numpad2',l:'2'},{c:'Numpad3',l:'3'},{c:'NumpadEnter',l:'↵',w:'w-numenter'},
+  ],
+  // Row 5 — Bottom
+  [
+    {c:'ControlLeft',l:'Ctrl',w:'w-ctrl'},
+    {c:'MetaLeft',l:'⊞ Win',w:'w-win'},
+    {c:'AltLeft',l:'Alt',w:'w-alt'},
+    {c:'Space',l:'Space',w:'w-space'},
+    {c:'AltRight',l:'Alt',w:'w-alt'},
+    {c:'MetaRight',l:'⊞',w:'w-win'},
+    {c:'ContextMenu',l:'☰',w:'w-win'},
+    {c:'ControlRight',l:'Ctrl',w:'w-ctrl'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'ArrowLeft',l:'←'},{c:'ArrowDown',l:'↓'},{c:'ArrowRight',l:'→'},
+    {c:'_g',l:'',w:'w-gap'},
+    {c:'Numpad0',l:'0',w:'w-backspace'},{c:'NumpadDecimal',l:'.'},
+  ],
+];
+
+const testedKeys = new Set();
+const allKeySet  = new Set();
+
+function buildKeyboard() {
+  const kb = document.getElementById('keyboard');
+  kb.innerHTML = '';
+  keyLayout.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    row.forEach(k => {
+      const el = document.createElement('div');
+      if (k.c.startsWith('_g')) {
+        el.className = 'key w-gap';
+        rowEl.appendChild(el);
+        return;
+      }
+      el.className = 'key' + (k.w ? ' ' + k.w : '');
+      el.id = 'key-' + k.c;
+      el.textContent = k.l;
+      allKeySet.add(k.c);
+      rowEl.appendChild(el);
+    });
+    kb.appendChild(rowEl);
+  });
+  document.getElementById('kb-total').textContent = 'Total: ' + allKeySet.size;
+}
+
+function updateKbStats() {
+  const t = testedKeys.size, tot = allKeySet.size;
+  document.getElementById('kb-tested').textContent = 'Tested: ' + t;
+  document.getElementById('kb-pct').textContent = tot ? Math.round(t / tot * 100) + '%' : '0%';
+}
+
+function resetKeyboard() {
+  testedKeys.clear();
+  document.querySelectorAll('.key.tested').forEach(el => el.classList.remove('tested'));
+  document.getElementById('last-key').textContent = 'Press any key…';
+  updateKbStats();
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('panel-keyboard').classList.contains('active')) return;
+  e.preventDefault();
+  const el = document.getElementById('key-' + e.code);
+  if (el) { el.classList.add('pressed', 'tested'); testedKeys.add(e.code); updateKbStats(); }
+  const name = e.key === ' ' ? 'Space' : e.key;
+  document.getElementById('last-key').innerHTML =
+    `Key: <strong style="color:#90cdf4">${escHtml(name)}</strong> &nbsp;·&nbsp; Code: <code style="color:#68d391">${e.code}</code> &nbsp;·&nbsp; KeyCode: <code>${e.keyCode}</code>`;
+});
+
+document.addEventListener('keyup', e => {
+  const el = document.getElementById('key-' + e.code);
+  if (el) el.classList.remove('pressed');
+});
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+buildKeyboard();
+
+/* ══════════════════════════════════════
+   CAMERA TEST
+══════════════════════════════════════ */
+let camStream = null;
+
+async function startCamera() {
+  document.getElementById('ci-status').textContent = 'Requesting…';
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const vdevs   = devices.filter(d => d.kind === 'videoinput');
+    const sel     = document.getElementById('cam-select');
+    sel.innerHTML = '';
+    vdevs.forEach((d, i) => {
+      const o = document.createElement('option');
+      o.value = d.deviceId;
+      o.text  = d.label || 'Camera ' + (i + 1);
+      sel.appendChild(o);
+    });
+    if (vdevs.length > 1) sel.style.display = 'inline-block';
+
+    const constraints = {
+      video: {
+        deviceId: sel.value ? { ideal: sel.value } : undefined,
+        width:     { ideal: 1920 },
+        height:    { ideal: 1080 },
+        frameRate: { ideal: 30 },
+      }
+    };
+    camStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+    const video = document.getElementById('cam-video');
+    video.srcObject = camStream;
+    video.style.display = 'block';
+    document.getElementById('cam-placeholder').style.display = 'none';
+    document.getElementById('cam-start').style.display = 'none';
+    document.getElementById('cam-stop').style.display  = 'inline-flex';
+
+    video.onloadedmetadata = () => {
+      const track    = camStream.getVideoTracks()[0];
+      const settings = track.getSettings();
+      const w = settings.width  || video.videoWidth;
+      const h = settings.height || video.videoHeight;
+      const gcd = (a, b) => b ? gcd(b, a % b) : a;
+      const d = gcd(w, h);
+      document.getElementById('ci-status').innerHTML = '<span class="text-green">✓ Active</span>';
+      document.getElementById('ci-device').textContent  = track.label || 'Unknown';
+      document.getElementById('ci-res').textContent     = w + ' × ' + h + ' px';
+      document.getElementById('ci-fps').textContent     = (settings.frameRate ? settings.frameRate.toFixed(1) : '—') + ' fps';
+      document.getElementById('ci-aspect').textContent  = (w/d) + ':' + (h/d);
+      document.getElementById('ci-facing').textContent  = settings.facingMode || 'N/A';
+    };
+  } catch(err) {
+    document.getElementById('ci-status').innerHTML = '<span class="text-red">✗ ' + escHtml(err.message) + '</span>';
+  }
+}
+
+function stopCamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  const video = document.getElementById('cam-video');
+  video.srcObject = null;
+  video.style.display = 'none';
+  document.getElementById('cam-placeholder').style.display = 'block';
+  document.getElementById('cam-start').style.display = 'inline-flex';
+  document.getElementById('cam-stop').style.display  = 'none';
+  document.getElementById('cam-select').style.display = 'none';
+  document.getElementById('ci-status').textContent = 'Stopped';
+}
+
+async function switchCamera() {
+  stopCamera();
+  await startCamera();
+}
+
+/* ══════════════════════════════════════
+   SOUND TEST
+══════════════════════════════════════ */
+let audioCtx   = null;
+let activeNodes = {};   // id → { osc|source, gain, panner }
+let currentCh  = 'both';
+let currentVol = 0.55;
+let customPlaying = false;
+let customNode    = null;
+
+function getCtx() {
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function panValue() {
+  return currentCh === 'left' ? -1 : currentCh === 'right' ? 1 : 0;
+}
+
+function setChannel(ch) {
+  currentCh = ch;
+  ['both','left','right'].forEach(x =>
+    document.getElementById('ch-' + x).classList.toggle('active', x === ch)
+  );
+  Object.values(activeNodes).forEach(n => { if (n.panner) n.panner.pan.value = panValue(); });
+  if (customNode) customNode.panner.pan.value = panValue();
+}
+
+function setVolume(v) {
+  currentVol = v / 100;
+  document.getElementById('vol-label').textContent = v + '%';
+  Object.values(activeNodes).forEach(n => { if (n.gain) n.gain.gain.value = currentVol; });
+  if (customNode) customNode.gain.gain.value = currentVol;
+}
+
+function makeToneNode(freq, type = 'sine') {
+  const ctx    = getCtx();
+  const osc    = ctx.createOscillator();
+  const gain   = ctx.createGain();
+  const panner = ctx.createStereoPanner();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = currentVol;
+  panner.pan.value = panValue();
+  osc.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
+  osc.start();
+  return { osc, gain, panner };
+}
+
+function toggleTone(id, freq) {
+  const card = document.getElementById('fc-' + id);
+  if (activeNodes[id]) {
+    activeNodes[id].osc.stop();
+    delete activeNodes[id];
+    card.classList.remove('playing');
+  } else {
+    activeNodes[id] = makeToneNode(freq);
+    card.classList.add('playing');
+  }
+}
+
+function toggleNoise() {
+  const card = document.getElementById('fc-white');
+  if (activeNodes['white']) {
+    activeNodes['white'].source.stop();
+    delete activeNodes['white'];
+    card.classList.remove('playing');
+    return;
+  }
+  const ctx  = getCtx();
+  const len  = ctx.sampleRate * 3;
+  const buf  = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = buf; source.loop = true;
+  const gain   = ctx.createGain();
+  const panner = ctx.createStereoPanner();
+  gain.gain.value  = currentVol * 0.25;
+  panner.pan.value = panValue();
+  source.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
+  source.start();
+  activeNodes['white'] = { source, gain, panner };
+  card.classList.add('playing');
+}
+
+function toggleCustom() {
+  if (customPlaying) {
+    if (customNode) { customNode.osc.stop(); customNode = null; }
+    customPlaying = false;
+    document.getElementById('ct-btn').textContent = '▶ Play';
+  } else {
+    const freq = Math.max(20, Math.min(20000, parseFloat(document.getElementById('ct-freq').value) || 440));
+    const wave = document.getElementById('ct-wave').value;
+    customNode  = makeToneNode(freq, wave);
+    customPlaying = true;
+    document.getElementById('ct-btn').textContent = '⏹ Stop';
+  }
+}
+
+function stopAll() {
+  Object.entries(activeNodes).forEach(([id, n]) => {
+    try { n.osc ? n.osc.stop() : n.source.stop(); } catch(e){}
+    const card = document.getElementById('fc-' + id);
+    if (card) card.classList.remove('playing');
+  });
+  activeNodes = {};
+  if (customNode) { try { customNode.osc.stop(); } catch(e){} customNode = null; }
+  customPlaying = false;
+  document.getElementById('ct-btn').textContent = '▶ Play';
+  document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('playing'));
+}
+
+/* ══════════════════════════════════════
+   BATTERY TEST
+══════════════════════════════════════ */
+function formatTime(s) {
+  if (!isFinite(s) || s === 0) return s === 0 ? 'Full' : '—';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return (h ? h + 'h ' : '') + m + 'm';
+}
+
+async function initBattery() {
+  if (!('getBattery' in navigator)) {
+    document.getElementById('bat-pct').textContent = 'N/A';
+    document.getElementById('bat-charging').textContent = 'Battery API not supported in this browser';
+    return;
+  }
+  try {
+    const bat = await navigator.getBattery();
+    const update = () => {
+      const lvl = Math.round(bat.level * 100);
+      const fill = document.getElementById('bat-fill');
+      fill.style.width = lvl + '%';
+      fill.style.background = lvl > 50
+        ? 'linear-gradient(90deg,#276749,#48bb78)'
+        : lvl > 20
+          ? 'linear-gradient(90deg,#975a16,#f6ad55)'
+          : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+      document.getElementById('bat-pct').textContent = lvl + '%';
+      document.getElementById('bat-charging').innerHTML = bat.charging
+        ? '<span class="text-green">⚡ Charging</span>'
+        : '🔋 Discharging';
+      document.getElementById('bat-chtime').textContent  = formatTime(bat.chargingTime);
+      document.getElementById('bat-distime').textContent = formatTime(bat.dischargingTime);
+    };
+    update();
+    bat.addEventListener('chargingchange',     update);
+    bat.addEventListener('levelchange',        update);
+    bat.addEventListener('chargingtimechange', update);
+    bat.addEventListener('dischargingtimechange', update);
+  } catch(e) {
+    document.getElementById('bat-charging').textContent = 'Error: ' + e.message;
+  }
+}
+
+function calcHealth() {
+  const design = parseFloat(document.getElementById('cap-design').value);
+  const full   = parseFloat(document.getElementById('cap-full').value);
+  const res    = document.getElementById('health-result');
+  if (!design || !full || design <= 0) { res.style.display = 'none'; return; }
+  const pct  = Math.min(100, Math.round(full / design * 100));
+  const fill = document.getElementById('health-fill');
+  fill.style.width = pct + '%';
+  fill.className   = 'health-fill ' + (pct >= 80 ? 'hf-good' : pct >= 60 ? 'hf-warn' : 'hf-poor');
+  document.getElementById('health-pct').textContent = pct + '%';
+  const msg = document.getElementById('health-msg');
+  if (pct >= 80) { msg.textContent = '✅ Good — battery is healthy.';              msg.className = 'health-msg text-green'; }
+  else if (pct >= 60) { msg.textContent = '⚠️ Fair — consider replacing soon.';   msg.className = 'health-msg text-yellow'; }
+  else                { msg.textContent = '❌ Poor — replacement recommended.';    msg.className = 'health-msg text-red'; }
+  res.style.display = 'block';
+}
+
+function copyText(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const old = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = old, 2000);
+  });
+}
+
+initBattery();
+</script>
+</body>
+</html>
