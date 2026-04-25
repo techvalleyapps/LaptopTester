@@ -285,28 +285,49 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 .form-input:focus, .form-select:focus { outline:none; border-color:#3182ce; }
 .mt-sm { margin-top:.5rem; }  .mt-md { margin-top:1rem; }
 
-/* download banner */
-.dl-banner {
-  background: linear-gradient(90deg, #1a2e1a, #1c3a28);
-  border-bottom: 1px solid #276749;
-  padding: .6rem 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* ── Steps ── */
+.step-block { display:flex; gap:1rem; margin-bottom:1.5rem; }
+.step-num {
+  width:28px; height:28px; flex-shrink:0;
+  background:#3182ce; color:#fff; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.8125rem; font-weight:700; margin-top:.125rem;
+}
+.step-body  { flex:1; }
+.step-title { font-size:.9375rem; font-weight:600; color:#f7fafc; margin-bottom:.5rem; }
+.step-hint  { font-size:.8125rem; color:#718096; margin-bottom:.625rem; }
+
+/* ── Report upload drop zone ── */
+.report-drop {
+  border: 2px dashed #4a5568;
+  border-radius: .75rem;
+  padding: 1.75rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: #0f1117;
+  margin-top: .5rem;
+}
+.report-drop:hover, .report-drop.drag-over { border-color:#3182ce; background:#0d1d33; }
+.report-drop .rd-icon  { font-size:2rem; margin-bottom:.375rem; }
+.report-drop .rd-title { font-size:.875rem; font-weight:600; color:#e2e8f0; margin-bottom:.25rem; }
+.report-drop .rd-sub   { font-size:.75rem; color:#718096; margin-bottom:.875rem; }
+
+/* ── Report results ── */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
 }
-.dl-banner-text { font-size: .8125rem; color: #68d391; }
-.dl-banner-text strong { color: #f7fafc; }
-.btn-dl {
-  background: #276749; color: #fff;
-  border: 1px solid #48bb78; border-radius: .45rem;
-  padding: .4rem 1rem; font-size: .8125rem; font-weight: 600;
-  cursor: pointer; text-decoration: none; white-space: nowrap;
-  display: inline-flex; align-items: center; gap: .4rem;
-  transition: background .15s;
+@media(max-width:500px){ .result-grid{ grid-template-columns:1fr; } }
+.result-box {
+  background: #0f1117;
+  border: 1px solid #2d3748;
+  border-radius: .625rem;
+  padding: 1rem;
 }
-.btn-dl:hover { background: #2f855a; }
+.result-box-title { font-size:.75rem; color:#718096; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.75rem; }
 </style>
 </head>
 <body>
@@ -317,14 +338,6 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
     <div class="header-title">LaptopTester</div>
     <div class="header-sub">Keyboard · Camera · Sound · Battery — all in your browser</div>
   </div>
-</div>
-
-<!-- download banner — only shown on GitHub Pages, hidden inside the Electron app -->
-<div class="dl-banner" id="dl-banner" style="display:none">
-  <span class="dl-banner-text">
-    🖥️ <strong>LaptopTester Desktop App</strong> — full battery diagnostics, runs offline, no browser needed
-  </span>
-  <a id="dl-link" class="btn-dl" href="#" download>⬇ Download LaptopTester.exe</a>
 </div>
 
 <div class="tabs" id="tab-bar">
@@ -472,18 +485,10 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
   <!-- ══════════ BATTERY ══════════ -->
   <div id="panel-battery" class="panel">
 
+    <!-- Live status -->
     <div class="card">
-      <div class="card-title">🔋 Battery Diagnostics</div>
-      <div class="card-desc" id="bat-desc">Reading battery data…</div>
-
-      <!-- notice shown only in browser/GitHub Pages mode -->
-      <div class="notice-box" id="bat-web-notice" style="display:none">
-        <strong>Running in browser.</strong> Only basic charge data is available here.
-        For full diagnostics (design capacity, health %, battery report) download and run the desktop app. &nbsp;
-        <a id="bat-dl-link" class="btn-dl" href="#" style="margin-top:.5rem;display:inline-flex">⬇ Download LaptopTester.exe</a>
-      </div>
-
-      <!-- Gauge + stats -->
+      <div class="card-title">🔋 Live Battery Status</div>
+      <div class="card-desc">Real-time data from your browser.</div>
       <div class="bat-overview">
         <div class="bat-icon-wrap">
           <div class="bat-body">
@@ -492,42 +497,101 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
           </div>
           <div class="bat-nub"></div>
         </div>
-        <div class="bat-meta" id="bat-meta">
-          <div class="bat-row"><span class="bat-lbl">Status</span>         <span class="bat-val" id="bat-status">—</span></div>
+        <div class="bat-meta">
           <div class="bat-row"><span class="bat-lbl">Charging</span>       <span class="bat-val" id="bat-charging">—</span></div>
+          <div class="bat-row"><span class="bat-lbl">Time to full</span>   <span class="bat-val" id="bat-chtime">—</span></div>
           <div class="bat-row"><span class="bat-lbl">Time remaining</span> <span class="bat-val" id="bat-distime">—</span></div>
-          <div class="bat-row" id="bat-row-chem"   style="display:none"><span class="bat-lbl">Chemistry</span>      <span class="bat-val" id="bat-chem">—</span></div>
-          <div class="bat-row" id="bat-row-device" style="display:none"><span class="bat-lbl">Device</span>         <span class="bat-val" id="bat-device">—</span></div>
         </div>
-      </div>
-
-      <!-- Capacity & Health (populated by JS when data available) -->
-      <div id="bat-health-wrap"></div>
-
-      <!-- Action buttons -->
-      <div class="flex-row" style="margin-top:1.25rem">
-        <button class="btn btn-secondary" onclick="refreshBattery()">🔄 Refresh</button>
-        <button class="btn btn-primary" id="btn-report" style="display:none" onclick="runBatteryReport()">📄 Generate Battery Report</button>
       </div>
     </div>
 
+    <!-- Health report uploader -->
     <div class="card">
-      <div class="card-title">💻 Quick Commands</div>
-      <div class="card-desc">Copy and run in PowerShell or CMD as Administrator.</div>
+      <div class="card-title">🩺 Battery Health — Report Analyser</div>
+      <div class="card-desc">Generate the Windows battery report, upload it here, and the site instantly calculates your battery health.</div>
 
-      <div class="cmd-desc">Full battery report (saves HTML to your profile):</div>
-      <div class="cmd-box">
-        <code>powercfg /batteryreport /output "%USERPROFILE%\battery-report.html"</code>
-        <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
+      <!-- Step 1 -->
+      <div class="step-block">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Generate the battery report</div>
+          <div class="step-hint">Open <strong>PowerShell or CMD as Administrator</strong> and run:</div>
+          <div class="cmd-box">
+            <code>powercfg /batteryreport /output "%USERPROFILE%\battery-report.html"</code>
+            <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
+          </div>
+          <div class="step-hint" style="margin-top:.5rem">This saves <strong>battery-report.html</strong> to your user folder (e.g. <code style="color:#76e4f7">C:\Users\YourName\</code>).</div>
+        </div>
       </div>
 
-      <div class="cmd-desc">Design capacity (PowerShell):</div>
+      <!-- Step 2 -->
+      <div class="step-block">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Upload the report file</div>
+          <input type="file" id="report-file" accept=".html,.htm" style="display:none" onchange="handleReportFile(this.files[0])">
+          <div class="report-drop" id="report-drop"
+               onclick="document.getElementById('report-file').click()"
+               ondragover="rdOver(event)" ondragleave="rdLeave(event)" ondrop="rdDrop(event)">
+            <div class="rd-icon">📄</div>
+            <div class="rd-title">Drop battery-report.html here</div>
+            <div class="rd-sub">or click to browse</div>
+            <button class="btn btn-secondary" onclick="event.stopPropagation();document.getElementById('report-file').click()">Browse File</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="report-results" style="display:none">
+        <div class="section-label">Results</div>
+
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="result-box-title">Battery Info</div>
+            <table class="info-table" id="res-info-table"></table>
+          </div>
+          <div class="result-box">
+            <div class="result-box-title">Capacity &amp; Health</div>
+            <table class="info-table" style="margin-bottom:.875rem" id="res-cap-table"></table>
+            <div class="health-label-row">
+              <span>Battery Health</span>
+              <span id="res-health-pct" style="font-weight:700">—</span>
+            </div>
+            <div class="health-bar">
+              <div class="health-fill" id="res-health-fill" style="width:0%"></div>
+            </div>
+            <p class="health-msg" id="res-health-msg"></p>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" onclick="resetReportUpload()">↺ Upload another report</button>
+      </div>
+    </div>
+
+    <!-- Extra commands -->
+    <div class="card">
+      <div class="card-title">💻 More Useful Commands</div>
+      <div class="card-desc">Run in PowerShell or CMD as Administrator.</div>
+
+      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to current folder):</div>
+      <div class="cmd-box">
+        <code>powercfg /energy /output "%USERPROFILE%\energy-report.html"</code>
+        <button class="copy-btn" onclick="copyText(this,'powercfg /energy /output \"%USERPROFILE%\\energy-report.html\"')">Copy</button>
+      </div>
+
+      <div class="cmd-desc">Quick battery level check (PowerShell):</div>
+      <div class="cmd-box">
+        <code>(Get-WmiObject Win32_Battery).EstimatedChargeRemaining</code>
+        <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject Win32_Battery).EstimatedChargeRemaining')">Copy</button>
+      </div>
+
+      <div class="cmd-desc">Design capacity (PowerShell — needs Admin):</div>
       <div class="cmd-box">
         <code>(Get-WmiObject -Class BatteryStaticData -Namespace root\wmi).DesignedCapacity</code>
         <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryStaticData -Namespace root\\wmi).DesignedCapacity')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Full charge capacity (PowerShell):</div>
+      <div class="cmd-desc">Full charge capacity (PowerShell — needs Admin):</div>
       <div class="cmd-box">
         <code>(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\wmi).FullChargedCapacity</code>
         <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\\wmi).FullChargedCapacity')">Copy</button>
@@ -541,33 +605,6 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 <script>
 'use strict';
 
-/* ── Download URL — auto-detected from GitHub Pages hostname ── */
-(function () {
-  // Only show the download banner when viewed on GitHub Pages,
-  // not when opened as a local file or running inside Electron.
-  if (window.electronAPI && window.electronAPI.isElectron) return;
-
-  const host = window.location.hostname; // e.g. "testonly52164.github.io"
-  let exeUrl = '#';
-
-  if (host.endsWith('.github.io')) {
-    // Extract username and repo name from the URL
-    const username = host.split('.')[0];                           // "testonly52164"
-    const parts    = window.location.pathname.split('/').filter(Boolean);
-    const repoName = parts[0] || 'LaptopTester';                   // "LaptopTester"
-    exeUrl = `https://github.com/${username}/${repoName}/releases/latest/download/LaptopTester.exe`;
-  }
-
-  // Show download banner
-  const banner = document.getElementById('dl-banner');
-  const dlLink = document.getElementById('dl-link');
-  const batLink = document.getElementById('bat-dl-link');
-  if (banner && exeUrl !== '#') {
-    dlLink.href  = exeUrl;
-    batLink.href = exeUrl;
-    banner.style.display = 'flex';
-  }
-})();
 
 /* ── Tab navigation ── */
 document.getElementById('tab-bar').addEventListener('click', e => {
@@ -832,120 +869,33 @@ function stopAll() {
 }
 
 /* ══════════════════════════════════════
-   BATTERY TEST
+   BATTERY — Live gauge (Battery API)
 ══════════════════════════════════════ */
-const chemNames = {
-  1:'Other', 2:'Unknown', 3:'Lead Acid', 4:'Nickel Cadmium',
-  5:'Nickel Metal Hydride', 6:'Lithium-Ion', 7:'Zinc Air', 8:'Lithium Polymer'
-};
-const statusNames = {
-  1:'Other', 2:'Unknown', 3:'Fully Charged', 4:'Low', 5:'Critical',
-  6:'Charging', 7:'Charging (High)', 8:'Charging (Low)', 9:'Charging (Critical)',
-  10:'Undefined', 11:'Partially Charged'
-};
-
-function setBatteryGauge(lvl) {
-  const fill = document.getElementById('bat-fill');
-  fill.style.width = lvl + '%';
-  fill.style.background = lvl > 50
-    ? 'linear-gradient(90deg,#276749,#48bb78)'
-    : lvl > 20
-      ? 'linear-gradient(90deg,#975a16,#f6ad55)'
-      : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
-  document.getElementById('bat-pct').textContent = lvl + '%';
-}
-
-function renderHealth(designCap, fullCap) {
-  const health    = Math.min(100, Math.round((fullCap / designCap) * 100));
-  const fillCls   = health >= 80 ? 'hf-good' : health >= 60 ? 'hf-warn' : 'hf-poor';
-  const color     = health >= 80 ? '#68d391' : health >= 60 ? '#f6ad55' : '#fc8181';
-  const msg       = health >= 80 ? '✅ Good — battery is healthy'
-                  : health >= 60 ? '⚠️ Fair — consider replacing soon'
-                  :                '❌ Poor — replacement recommended';
-  document.getElementById('bat-health-wrap').innerHTML = `
-    <div class="section-label" style="margin-top:1.25rem">Capacity &amp; Health</div>
-    <table class="info-table" style="margin-bottom:1rem">
-      <tr><td>Design Capacity</td>      <td>${designCap.toLocaleString()} mWh</td></tr>
-      <tr><td>Full Charge Capacity</td> <td>${fullCap.toLocaleString()} mWh</td></tr>
-    </table>
-    <div class="health-label-row">
-      <span>Battery Health</span>
-      <span style="color:${color};font-weight:700">${health}%</span>
-    </div>
-    <div class="health-bar">
-      <div class="health-fill ${fillCls}" style="width:${health}%"></div>
-    </div>
-    <p class="health-msg" style="color:${color}">${msg}</p>`;
-}
-
-// ── Electron path (full WMI data) ─────────────────────────────────────────────
-async function loadElectronBattery() {
-  document.getElementById('bat-desc').textContent = 'Reading WMI battery data…';
-  try {
-    const d = await window.electronAPI.getBattery();
-
-    // Level
-    if (d.level !== undefined) setBatteryGauge(d.level);
-
-    // Status / charging
-    document.getElementById('bat-status').textContent   = statusNames[d.status] || 'Unknown';
-    document.getElementById('bat-charging').innerHTML   =
-      (d.status === 6 || d.status === 7 || d.status === 8 || d.status === 9)
-        ? '<span class="text-green">⚡ Yes</span>' : 'No';
-
-    // Run time
-    const rt = d.runTime;
-    document.getElementById('bat-distime').textContent  =
-      (rt && rt > 0) ? (Math.floor(rt/60) + 'h ' + (rt%60) + 'm') : '—';
-
-    // Chemistry + device (Electron-only rows)
-    document.getElementById('bat-chem').textContent    = chemNames[d.chem]  || 'Unknown';
-    document.getElementById('bat-device').textContent  = d.name || '—';
-    document.getElementById('bat-row-chem').style.display   = 'flex';
-    document.getElementById('bat-row-device').style.display = 'flex';
-
-    // Health
-    if (d.designCap && d.fullCap && d.designCap > 0) {
-      renderHealth(d.designCap, d.fullCap);
-    } else {
-      const why = d.designErr || d.fullErr || 'WMI data unavailable';
-      document.getElementById('bat-health-wrap').innerHTML =
-        `<div class="section-label" style="margin-top:1.25rem">Capacity &amp; Health</div>
-         <p class="text-muted">${esc(why)} — ensure the app is running as Administrator.</p>`;
-    }
-
-    document.getElementById('bat-desc').textContent = 'Live data from Windows WMI.';
-    document.getElementById('btn-report').style.display = 'inline-flex';
-
-  } catch(e) {
-    document.getElementById('bat-desc').innerHTML =
-      `<span class="text-red">Error reading battery data: ${esc(e.message)}</span>`;
-  }
-}
-
-// ── Browser / GitHub Pages path (Battery API) ─────────────────────────────────
-async function loadWebBattery() {
-  document.getElementById('bat-web-notice').style.display = 'block';
-  document.getElementById('bat-desc').textContent = 'Basic data from browser Battery API.';
-  document.getElementById('bat-status').textContent = 'N/A (browser limitation)';
-
+async function initBattery() {
   if (!('getBattery' in navigator)) {
-    document.getElementById('bat-pct').textContent = 'N/A';
-    document.getElementById('bat-charging').textContent = 'Battery API not supported';
+    document.getElementById('bat-pct').textContent      = 'N/A';
+    document.getElementById('bat-charging').textContent = 'Battery API not supported in this browser';
     return;
   }
   try {
     const bat = await navigator.getBattery();
     const upd = () => {
-      const lvl = Math.round(bat.level * 100);
-      setBatteryGauge(lvl);
-      document.getElementById('bat-status').textContent = '—';
-      document.getElementById('bat-charging').innerHTML = bat.charging
+      const lvl  = Math.round(bat.level * 100);
+      const fill = document.getElementById('bat-fill');
+      fill.style.width = lvl + '%';
+      fill.style.background = lvl > 50
+        ? 'linear-gradient(90deg,#276749,#48bb78)'
+        : lvl > 20 ? 'linear-gradient(90deg,#975a16,#f6ad55)'
+                   : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+      document.getElementById('bat-pct').textContent     = lvl + '%';
+      document.getElementById('bat-charging').innerHTML  = bat.charging
         ? '<span class="text-green">⚡ Charging</span>' : '🔋 Discharging';
+      const ct = bat.chargingTime;
+      document.getElementById('bat-chtime').textContent  =
+        (!isFinite(ct) || ct <= 0) ? '—' : fmtBatTime(ct);
       const dt = bat.dischargingTime;
       document.getElementById('bat-distime').textContent =
-        (!isFinite(dt) || dt <= 0) ? '—' :
-        (Math.floor(dt/3600) + 'h ' + Math.floor((dt%3600)/60) + 'm');
+        (!isFinite(dt) || dt <= 0) ? '—' : fmtBatTime(dt);
     };
     upd();
     ['chargingchange','levelchange','chargingtimechange','dischargingtimechange']
@@ -954,30 +904,109 @@ async function loadWebBattery() {
     document.getElementById('bat-charging').textContent = 'Error: ' + e.message;
   }
 }
+function fmtBatTime(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return (h ? h + 'h ' : '') + m + 'm';
+}
 
-async function initBattery() {
-  if (window.electronAPI && window.electronAPI.isElectron) {
-    await loadElectronBattery();
+/* ══════════════════════════════════════
+   BATTERY — Report file parser
+══════════════════════════════════════ */
+function rdOver(e)  { e.preventDefault(); document.getElementById('report-drop').classList.add('drag-over'); }
+function rdLeave()  { document.getElementById('report-drop').classList.remove('drag-over'); }
+function rdDrop(e)  { e.preventDefault(); rdLeave(); const f = e.dataTransfer.files[0]; if (f) handleReportFile(f); }
+
+function handleReportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => parseAndDisplay(e.target.result);
+  reader.readAsText(file);
+}
+
+function parseBatteryReport(html) {
+  const doc  = new DOMParser().parseFromString(html, 'text/html');
+  const data = {};
+
+  // Walk every <td> — when we find a known label the NEXT <td> is the value
+  const cells = Array.from(doc.querySelectorAll('td'));
+  cells.forEach((cell, i) => {
+    const label = cell.textContent.trim().toUpperCase().replace(/\s+/g, ' ');
+    const next  = cells[i + 1];
+    if (!next) return;
+    const val = next.textContent.trim();
+
+    switch (label) {
+      case 'DESIGN CAPACITY':      data.designCapStr = val; data.designCap = parseMWh(val); break;
+      case 'FULL CHARGE CAPACITY': data.fullCapStr   = val; data.fullCap   = parseMWh(val); break;
+      case 'CYCLE COUNT':          data.cycleCount   = val; break;
+      case 'NAME':                 if (!data.name)         data.name         = val; break;
+      case 'MANUFACTURER':         if (!data.manufacturer) data.manufacturer = val; break;
+      case 'SERIAL NUMBER':        if (!data.serial)       data.serial       = val; break;
+      case 'CHEMISTRY':            if (!data.chemistry)    data.chemistry    = val; break;
+      case 'ID':                   if (!data.id)           data.id           = val; break;
+    }
+  });
+  return data;
+}
+
+function parseMWh(str) {
+  if (!str) return null;
+  const n = parseInt(str.replace(/[,\s]/g, ''), 10);
+  return isNaN(n) ? null : n;
+}
+
+function parseAndDisplay(html) {
+  const d = parseBatteryReport(html);
+
+  // ── Battery info table ──
+  const infoRows = [
+    ['Name',          d.name         || '—'],
+    ['Manufacturer',  d.manufacturer || '—'],
+    ['Chemistry',     d.chemistry    || '—'],
+    ['Serial Number', d.serial       || '—'],
+    ['Cycle Count',   d.cycleCount   || '—'],
+  ];
+  document.getElementById('res-info-table').innerHTML =
+    infoRows.map(([l, v]) => `<tr><td>${l}</td><td>${esc(v)}</td></tr>`).join('');
+
+  // ── Capacity table ──
+  const capRows = [
+    ['Design Capacity',      d.designCapStr || '—'],
+    ['Full Charge Capacity', d.fullCapStr   || '—'],
+  ];
+  document.getElementById('res-cap-table').innerHTML =
+    capRows.map(([l, v]) => `<tr><td>${l}</td><td>${esc(v)}</td></tr>`).join('');
+
+  // ── Health ──
+  if (d.designCap && d.fullCap && d.designCap > 0) {
+    const pct      = Math.min(100, Math.round((d.fullCap / d.designCap) * 100));
+    const fillCls  = pct >= 80 ? 'hf-good' : pct >= 60 ? 'hf-warn' : 'hf-poor';
+    const color    = pct >= 80 ? '#68d391' : pct >= 60 ? '#f6ad55' : '#fc8181';
+    const msg      = pct >= 80 ? '✅ Good — battery is healthy'
+                   : pct >= 60 ? '⚠️ Fair — consider replacing soon'
+                   :             '❌ Poor — replacement recommended';
+    document.getElementById('res-health-pct').textContent    = pct + '%';
+    document.getElementById('res-health-pct').style.color    = color;
+    document.getElementById('res-health-fill').style.width   = pct + '%';
+    document.getElementById('res-health-fill').className     = 'health-fill ' + fillCls;
+    document.getElementById('res-health-msg').textContent    = msg;
+    document.getElementById('res-health-msg').style.color    = color;
   } else {
-    await loadWebBattery();
+    document.getElementById('res-health-pct').textContent = 'N/A';
+    document.getElementById('res-health-msg').textContent =
+      'Could not find capacity values in this file. Make sure you uploaded the correct battery-report.html.';
+    document.getElementById('res-health-msg').style.color = '#f6ad55';
   }
+
+  // Show results, hide drop zone
+  document.getElementById('report-drop').style.display    = 'none';
+  document.getElementById('report-results').style.display = 'block';
 }
 
-async function refreshBattery() {
-  document.getElementById('bat-health-wrap').innerHTML = '';
-  await initBattery();
-}
-
-async function runBatteryReport() {
-  const btn = document.getElementById('btn-report');
-  btn.disabled = true; btn.textContent = '⏳ Generating…';
-  try {
-    const r = await window.electronAPI.batteryReport();
-    btn.textContent = r.success ? '✅ Report Opened' : '❌ ' + (r.error || 'Failed');
-  } catch(e) {
-    btn.textContent = '❌ Error';
-  }
-  setTimeout(() => { btn.textContent = '📄 Generate Battery Report'; btn.disabled = false; }, 3000);
+function resetReportUpload() {
+  document.getElementById('report-file').value            = '';
+  document.getElementById('report-drop').style.display    = 'block';
+  document.getElementById('report-results').style.display = 'none';
 }
 
 function copyText(btn, text) {
