@@ -284,6 +284,29 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 }
 .form-input:focus, .form-select:focus { outline:none; border-color:#3182ce; }
 .mt-sm { margin-top:.5rem; }  .mt-md { margin-top:1rem; }
+
+/* download banner */
+.dl-banner {
+  background: linear-gradient(90deg, #1a2e1a, #1c3a28);
+  border-bottom: 1px solid #276749;
+  padding: .6rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.dl-banner-text { font-size: .8125rem; color: #68d391; }
+.dl-banner-text strong { color: #f7fafc; }
+.btn-dl {
+  background: #276749; color: #fff;
+  border: 1px solid #48bb78; border-radius: .45rem;
+  padding: .4rem 1rem; font-size: .8125rem; font-weight: 600;
+  cursor: pointer; text-decoration: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: .4rem;
+  transition: background .15s;
+}
+.btn-dl:hover { background: #2f855a; }
 </style>
 </head>
 <body>
@@ -294,6 +317,14 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
     <div class="header-title">LaptopTester</div>
     <div class="header-sub">Keyboard · Camera · Sound · Battery — all in your browser</div>
   </div>
+</div>
+
+<!-- download banner — only shown on GitHub Pages, hidden inside the Electron app -->
+<div class="dl-banner" id="dl-banner" style="display:none">
+  <span class="dl-banner-text">
+    🖥️ <strong>LaptopTester Desktop App</strong> — full battery diagnostics, runs offline, no browser needed
+  </span>
+  <a id="dl-link" class="btn-dl" href="#" download>⬇ Download LaptopTester.exe</a>
 </div>
 
 <div class="tabs" id="tab-bar">
@@ -447,8 +478,9 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 
       <!-- notice shown only in browser/GitHub Pages mode -->
       <div class="notice-box" id="bat-web-notice" style="display:none">
-        <strong>Running in browser.</strong> Only basic data is available here.
-        Download and run <strong>LaptopTester.exe</strong> for full WMI diagnostics — level, chemistry, design capacity, health %, and one-click battery report.
+        <strong>Running in browser.</strong> Only basic charge data is available here.
+        For full diagnostics (design capacity, health %, battery report) download and run the desktop app. &nbsp;
+        <a id="bat-dl-link" class="btn-dl" href="#" style="margin-top:.5rem;display:inline-flex">⬇ Download LaptopTester.exe</a>
       </div>
 
       <!-- Gauge + stats -->
@@ -508,6 +540,34 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
 
 <script>
 'use strict';
+
+/* ── Download URL — auto-detected from GitHub Pages hostname ── */
+(function () {
+  // Only show the download banner when viewed on GitHub Pages,
+  // not when opened as a local file or running inside Electron.
+  if (window.electronAPI && window.electronAPI.isElectron) return;
+
+  const host = window.location.hostname; // e.g. "testonly52164.github.io"
+  let exeUrl = '#';
+
+  if (host.endsWith('.github.io')) {
+    // Extract username and repo name from the URL
+    const username = host.split('.')[0];                           // "testonly52164"
+    const parts    = window.location.pathname.split('/').filter(Boolean);
+    const repoName = parts[0] || 'LaptopTester';                   // "LaptopTester"
+    exeUrl = `https://github.com/${username}/${repoName}/releases/latest/download/LaptopTester.exe`;
+  }
+
+  // Show download banner
+  const banner = document.getElementById('dl-banner');
+  const dlLink = document.getElementById('dl-link');
+  const batLink = document.getElementById('bat-dl-link');
+  if (banner && exeUrl !== '#') {
+    dlLink.href  = exeUrl;
+    batLink.href = exeUrl;
+    banner.style.display = 'flex';
+  }
+})();
 
 /* ── Tab navigation ── */
 document.getElementById('tab-bar').addEventListener('click', e => {
