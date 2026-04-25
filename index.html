@@ -132,8 +132,9 @@ body {
 .w-shiftl   { min-width:108px;}  .w-shiftr   { min-width:108px;}
 .w-ctrl     { min-width:58px; }  .w-win      { min-width:52px; }
 .w-alt      { min-width:52px; }  .w-space    { min-width:290px;}
-.w-gap      { min-width:16px; background:transparent!important; border:none!important; }
-.w-numenter { height:84px; min-width:40px; }
+.w-gap      { min-width:16px;  background:transparent!important; border:none!important; }
+.w-navsp    { min-width:128px; background:transparent!important; border:none!important; }
+.w-keysp    { min-width:40px;  background:transparent!important; border:none!important; }
 
 /* ─────────────────── CAMERA ─────────────────── */
 .camera-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
@@ -515,7 +516,7 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
         <div class="step-num">1</div>
         <div class="step-body">
           <div class="step-title">Generate the battery report</div>
-          <div class="step-hint">Open <strong>PowerShell or CMD as Administrator</strong> and run:</div>
+          <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#76e4f7">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
           <div class="cmd-box">
             <code>powercfg /batteryreport /output "%USERPROFILE%\battery-report.html"</code>
             <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
@@ -571,30 +572,30 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
     <!-- Extra commands -->
     <div class="card">
       <div class="card-title">💻 More Useful Commands</div>
-      <div class="card-desc">Run in PowerShell or CMD as Administrator.</div>
+      <div class="card-desc">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#76e4f7">cmd</code> → right-click → Run as administrator.</div>
 
-      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to current folder):</div>
+      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to your user folder):</div>
       <div class="cmd-box">
         <code>powercfg /energy /output "%USERPROFILE%\energy-report.html"</code>
         <button class="copy-btn" onclick="copyText(this,'powercfg /energy /output \"%USERPROFILE%\\energy-report.html\"')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Quick battery level check (PowerShell):</div>
+      <div class="cmd-desc">Quick battery level check (%):</div>
       <div class="cmd-box">
-        <code>(Get-WmiObject Win32_Battery).EstimatedChargeRemaining</code>
-        <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject Win32_Battery).EstimatedChargeRemaining')">Copy</button>
+        <code>wmic PATH Win32_Battery GET EstimatedChargeRemaining</code>
+        <button class="copy-btn" onclick="copyText(this,'wmic PATH Win32_Battery GET EstimatedChargeRemaining')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Design capacity (PowerShell — needs Admin):</div>
+      <div class="cmd-desc">Design capacity in mWh (needs Admin):</div>
       <div class="cmd-box">
-        <code>(Get-WmiObject -Class BatteryStaticData -Namespace root\wmi).DesignedCapacity</code>
-        <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryStaticData -Namespace root\\wmi).DesignedCapacity')">Copy</button>
+        <code>wmic /namespace:\\root\wmi PATH BatteryStaticData GET DesignedCapacity</code>
+        <button class="copy-btn" onclick="copyText(this,'wmic /namespace:\\\\root\\wmi PATH BatteryStaticData GET DesignedCapacity')">Copy</button>
       </div>
 
-      <div class="cmd-desc">Full charge capacity (PowerShell — needs Admin):</div>
+      <div class="cmd-desc">Full charge capacity in mWh (needs Admin):</div>
       <div class="cmd-box">
-        <code>(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\wmi).FullChargedCapacity</code>
-        <button class="copy-btn" onclick="copyText(this,'(Get-WmiObject -Class BatteryFullChargedCapacity -Namespace root\\wmi).FullChargedCapacity')">Copy</button>
+        <code>wmic /namespace:\\root\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity</code>
+        <button class="copy-btn" onclick="copyText(this,'wmic /namespace:\\\\root\\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity')">Copy</button>
       </div>
     </div>
 
@@ -620,6 +621,7 @@ document.getElementById('tab-bar').addEventListener('click', e => {
    KEYBOARD TEST
 ══════════════════════════════════════ */
 const keyLayout = [
+  // Row 0 — Function row
   [
     {c:'Escape',l:'Esc',w:'w-escape'},{c:'_g',l:'',w:'w-gap'},
     {c:'F1',l:'F1'},{c:'F2',l:'F2'},{c:'F3',l:'F3'},{c:'F4',l:'F4'},{c:'_g',l:'',w:'w-gap'},
@@ -627,47 +629,47 @@ const keyLayout = [
     {c:'F9',l:'F9'},{c:'F10',l:'F10'},{c:'F11',l:'F11'},{c:'F12',l:'F12'},{c:'_g',l:'',w:'w-gap'},
     {c:'PrintScreen',l:'PrtSc'},{c:'ScrollLock',l:'ScrLk'},{c:'Pause',l:'Pause'},
   ],
+  // Row 1 — Number row
   [
     {c:'Backquote',l:'`~'},{c:'Digit1',l:'1!'},{c:'Digit2',l:'2@'},{c:'Digit3',l:'3#'},
     {c:'Digit4',l:'4$'},{c:'Digit5',l:'5%'},{c:'Digit6',l:'6^'},{c:'Digit7',l:'7&'},
     {c:'Digit8',l:'8*'},{c:'Digit9',l:'9('},{c:'Digit0',l:'0)'},{c:'Minus',l:'-_'},
     {c:'Equal',l:'=+'},{c:'Backspace',l:'⌫ Bksp',w:'w-backspace'},{c:'_g',l:'',w:'w-gap'},
-    {c:'Insert',l:'Ins'},{c:'Home',l:'Home'},{c:'PageUp',l:'PgUp'},{c:'_g',l:'',w:'w-gap'},
-    {c:'NumLock',l:'Num'},{c:'NumpadDivide',l:'/'},{c:'NumpadMultiply',l:'×'},{c:'NumpadSubtract',l:'−'},
+    {c:'Insert',l:'Ins'},{c:'Home',l:'Home'},{c:'PageUp',l:'PgUp'},
   ],
+  // Row 2 — Tab / QWERTY row
   [
     {c:'Tab',l:'Tab',w:'w-tab'},
     {c:'KeyQ',l:'Q'},{c:'KeyW',l:'W'},{c:'KeyE',l:'E'},{c:'KeyR',l:'R'},{c:'KeyT',l:'T'},
     {c:'KeyY',l:'Y'},{c:'KeyU',l:'U'},{c:'KeyI',l:'I'},{c:'KeyO',l:'O'},{c:'KeyP',l:'P'},
     {c:'BracketLeft',l:'[{'},{c:'BracketRight',l:']}'},{c:'Backslash',l:'\\|',w:'w-backslash'},
     {c:'_g',l:'',w:'w-gap'},
-    {c:'Delete',l:'Del'},{c:'End',l:'End'},{c:'PageDown',l:'PgDn'},{c:'_g',l:'',w:'w-gap'},
-    {c:'Numpad7',l:'7'},{c:'Numpad8',l:'8'},{c:'Numpad9',l:'9'},{c:'NumpadAdd',l:'+',w:'w-numenter'},
+    {c:'Delete',l:'Del'},{c:'End',l:'End'},{c:'PageDown',l:'PgDn'},
   ],
+  // Row 3 — Caps / ASDF row  (no nav keys — spacer keeps alignment)
   [
     {c:'CapsLock',l:'Caps Lock',w:'w-caps'},
     {c:'KeyA',l:'A'},{c:'KeyS',l:'S'},{c:'KeyD',l:'D'},{c:'KeyF',l:'F'},{c:'KeyG',l:'G'},
     {c:'KeyH',l:'H'},{c:'KeyJ',l:'J'},{c:'KeyK',l:'K'},{c:'KeyL',l:'L'},
     {c:'Semicolon',l:';:'},{c:'Quote',l:'\'\"'},{c:'Enter',l:'Enter ↵',w:'w-enter'},
-    {c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},
-    {c:'Numpad4',l:'4'},{c:'Numpad5',l:'5'},{c:'Numpad6',l:'6'},
+    {c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-navsp'},
   ],
+  // Row 4 — Shift / ZXCV row  (Up arrow centred over Down)
   [
     {c:'ShiftLeft',l:'⇧ Shift',w:'w-shiftl'},
     {c:'KeyZ',l:'Z'},{c:'KeyX',l:'X'},{c:'KeyC',l:'C'},{c:'KeyV',l:'V'},{c:'KeyB',l:'B'},
     {c:'KeyN',l:'N'},{c:'KeyM',l:'M'},{c:'Comma',l:',<'},{c:'Period',l:'.>'},{c:'Slash',l:'/?'},
     {c:'ShiftRight',l:'⇧ Shift',w:'w-shiftr'},{c:'_g',l:'',w:'w-gap'},
-    {c:'_g',l:'',w:'w-gap'},{c:'ArrowUp',l:'↑'},{c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-gap'},
-    {c:'Numpad1',l:'1'},{c:'Numpad2',l:'2'},{c:'Numpad3',l:'3'},{c:'NumpadEnter',l:'↵',w:'w-numenter'},
+    {c:'_g',l:'',w:'w-keysp'},{c:'ArrowUp',l:'↑'},{c:'_g',l:'',w:'w-keysp'},
   ],
+  // Row 5 — Bottom row
   [
     {c:'ControlLeft',l:'Ctrl',w:'w-ctrl'},{c:'MetaLeft',l:'⊞ Win',w:'w-win'},
     {c:'AltLeft',l:'Alt',w:'w-alt'},{c:'Space',l:'Space',w:'w-space'},
     {c:'AltRight',l:'Alt',w:'w-alt'},{c:'MetaRight',l:'⊞',w:'w-win'},
     {c:'ContextMenu',l:'☰',w:'w-win'},{c:'ControlRight',l:'Ctrl',w:'w-ctrl'},
     {c:'_g',l:'',w:'w-gap'},
-    {c:'ArrowLeft',l:'←'},{c:'ArrowDown',l:'↓'},{c:'ArrowRight',l:'→'},{c:'_g',l:'',w:'w-gap'},
-    {c:'Numpad0',l:'0',w:'w-backspace'},{c:'NumpadDecimal',l:'.'},
+    {c:'ArrowLeft',l:'←'},{c:'ArrowDown',l:'↓'},{c:'ArrowRight',l:'→'},
   ],
 ];
 
@@ -682,7 +684,7 @@ function buildKeyboard() {
     rowEl.className = 'kb-row';
     row.forEach(k => {
       const el = document.createElement('div');
-      if (k.c.startsWith('_g')) { el.className = 'key w-gap'; rowEl.appendChild(el); return; }
+      if (k.c.startsWith('_g')) { el.className = 'key ' + (k.w || 'w-gap'); rowEl.appendChild(el); return; }
       el.className = 'key' + (k.w ? ' ' + k.w : '');
       el.id = 'key-' + k.c;
       el.textContent = k.l;
@@ -927,18 +929,22 @@ function parseBatteryReport(html) {
   const doc  = new DOMParser().parseFromString(html, 'text/html');
   const data = {};
 
-  // Walk every <td> — when we find a known label the NEXT <td> is the value
-  const cells = Array.from(doc.querySelectorAll('td'));
-  cells.forEach((cell, i) => {
-    const label = cell.textContent.trim().toUpperCase().replace(/\s+/g, ' ');
-    const next  = cells[i + 1];
-    if (!next) return;
-    const val = next.textContent.trim();
+  // Labels in the powercfg report are always inside <span class="label">
+  // The value sits in the next sibling <td> of the label's parent <td>.
+  // Using span.label avoids false matches from plain column-header <td> cells
+  // (e.g. "FULL CHARGE CAPACITY" / "DESIGN CAPACITY" in the capacity-history table).
+  doc.querySelectorAll('span.label').forEach(span => {
+    const label   = span.textContent.trim().toUpperCase().replace(/\s+/g, ' ');
+    const labelTd = span.closest('td');
+    if (!labelTd) return;
+    const valueTd = labelTd.nextElementSibling;
+    if (!valueTd) return;
+    const val = valueTd.textContent.trim();
 
     switch (label) {
-      case 'DESIGN CAPACITY':      data.designCapStr = val; data.designCap = parseMWh(val); break;
-      case 'FULL CHARGE CAPACITY': data.fullCapStr   = val; data.fullCap   = parseMWh(val); break;
-      case 'CYCLE COUNT':          data.cycleCount   = val; break;
+      case 'DESIGN CAPACITY':      if (!data.designCap)    { data.designCapStr = val; data.designCap = parseMWh(val); } break;
+      case 'FULL CHARGE CAPACITY': if (!data.fullCap)      { data.fullCapStr   = val; data.fullCap   = parseMWh(val); } break;
+      case 'CYCLE COUNT':          if (!data.cycleCount)   data.cycleCount   = val; break;
       case 'NAME':                 if (!data.name)         data.name         = val; break;
       case 'MANUFACTURER':         if (!data.manufacturer) data.manufacturer = val; break;
       case 'SERIAL NUMBER':        if (!data.serial)       data.serial       = val; break;
