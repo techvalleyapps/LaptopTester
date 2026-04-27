@@ -836,9 +836,10 @@ document.addEventListener('keyup', e => {
 });
 
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-buildKeyboard();
-buildNumpad();
-updateKbStats();
+// Auto-detect OS and pick the matching layout
+const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform) ||
+              (/Apple/.test(navigator.vendor) && /Mobile/.test(navigator.userAgent));
+if (isMac) switchLayout('mac'); else { buildKeyboard(); buildNumpad(); updateKbStats(); }
 
 /* ══════════════════════════════════════
    CAMERA TEST
