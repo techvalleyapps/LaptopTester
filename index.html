@@ -560,10 +560,10 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
           <div class="step-title">Generate the battery report</div>
           <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#76e4f7">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
           <div class="cmd-box">
-            <code>powercfg /batteryreport /output "%USERPROFILE%\battery-report.html"</code>
-            <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\battery-report.html\"')">Copy</button>
+            <code>powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"</code>
+            <button class="copy-btn" onclick="copyText(this,'powercfg /batteryreport /output \"%USERPROFILE%\\Downloads\\battery-report.html\"')">Copy</button>
           </div>
-          <div class="step-hint" style="margin-top:.5rem">This saves <strong>battery-report.html</strong> to your user folder (e.g. <code style="color:#76e4f7">C:\Users\YourName\</code>).</div>
+          <div class="step-hint" style="margin-top:.5rem">This saves <strong>battery-report.html</strong> to your Downloads folder (e.g. <code style="color:#76e4f7">C:\Users\YourName\Downloads\</code>).</div>
         </div>
       </div>
 
@@ -616,10 +616,10 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
       <div class="card-title">💻 More Useful Commands</div>
       <div class="card-desc">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#76e4f7">cmd</code> → right-click → Run as administrator.</div>
 
-      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to your user folder):</div>
+      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to Downloads):</div>
       <div class="cmd-box">
-        <code>powercfg /energy /output "%USERPROFILE%\energy-report.html"</code>
-        <button class="copy-btn" onclick="copyText(this,'powercfg /energy /output \"%USERPROFILE%\\energy-report.html\"')">Copy</button>
+        <code>powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"</code>
+        <button class="copy-btn" onclick="copyText(this,'powercfg /energy /output \"%USERPROFILE%\\Downloads\\energy-report.html\"')">Copy</button>
       </div>
 
       <div class="cmd-desc">Quick battery level check (%):</div>
