@@ -157,9 +157,6 @@ body {
 }
 .numpad .key { width:100%; height:100%; min-width:unset; }
 
-/* ── Per-channel volume ── */
-.vol-group { display:flex; flex-direction:column; gap:.45rem; }
-.vol-row label { white-space:nowrap; }
 
 /* ─────────────────── CAMERA ─────────────────── */
 .camera-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
@@ -182,29 +179,6 @@ body {
 .info-table td:last-child  { color:#f7fafc; font-weight:500; word-break:break-all; }
 
 /* ─────────────────── SOUND ─────────────────── */
-.sound-controls-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 1.25rem;
-  align-items: start;
-  margin-bottom: 1.5rem;
-}
-@media(max-width:520px){ .sound-controls-row{ grid-template-columns:1fr; } }
-
-.channel-row { display:flex; gap:.5rem; }
-.ch-btn {
-  flex:1; padding:.5rem .75rem;
-  border:1px solid #2d3748; border-radius:.45rem;
-  background:#0f1117; color:#718096;
-  cursor:pointer; font-size:.8125rem; font-weight:500;
-  transition:all .15s; white-space:nowrap;
-}
-.ch-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
-
-.vol-row { display:flex; align-items:center; gap:.75rem; }
-.vol-row label { font-size:.8125rem; color:#718096; white-space:nowrap; }
-input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
-
 /* YouTube embed */
 .yt-wrap {
   position: relative;
@@ -212,50 +186,38 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
   border-radius: .75rem;
   overflow: hidden;
   background: #000;
-  margin-bottom: .75rem;
+  margin-bottom: 1rem;
 }
 .yt-wrap iframe {
   display: block;
   width: 100% !important;
-  height: 200px !important;
+  height: 240px !important;
   border: none;
 }
-#yt-player { height: 200px; background: #000; }
+#yt-player { height: 240px; background: #000; }
 
-.section-label {
-  font-size: .75rem;
-  font-weight: 700;
-  color: #718096;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-bottom: .875rem;
-  padding-bottom: .5rem;
-  border-bottom: 1px solid #2d3748;
+/* Controls bar below the player */
+.snd-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: .625rem;
 }
+.vol-row { display:flex; align-items:center; gap:.75rem; }
+.vol-row label { font-size:.8125rem; color:#718096; white-space:nowrap; }
+input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:120px; }
 
-/* Tone buttons */
-.freq-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: .625rem;
-  margin-bottom: 1rem;
+.channel-row { display:flex; gap:.5rem; }
+.ch-btn {
+  padding:.5rem 1rem;
+  border:1px solid #2d3748; border-radius:.45rem;
+  background:#0f1117; color:#718096;
+  cursor:pointer; font-size:.8125rem; font-weight:500;
+  transition:all .15s; white-space:nowrap;
 }
-.freq-card {
-  padding: .875rem .625rem;
-  border: 1px solid #2d3748;
-  border-radius: .625rem;
-  background: #0f1117;
-  text-align: center;
-  cursor: pointer;
-  transition: all .15s;
-  user-select: none;
-}
-.freq-card:hover  { border-color: #63b3ed; background: #1a2744; }
-.freq-card.playing{ border-color: #48bb78; background: #1c3a28; }
-.freq-card .fc-icon { font-size: 1.375rem; margin-bottom: .2rem; }
-.freq-card .fc-name { font-size: .8125rem; font-weight: 600; color: #e2e8f0; }
-.freq-card .fc-hz   { font-size: .6875rem; color: #718096; margin-top: .1rem; }
-.freq-card.playing .fc-name { color: #68d391; }
+.ch-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
+.ch-hint { font-size:.8125rem; color:#718096; margin-top:.25rem; }
 
 /* ─────────────────── BATTERY ─────────────────── */
 .bat-overview { display:flex; align-items:center; gap:2rem; margin-bottom:1.25rem; flex-wrap:wrap; }
@@ -447,81 +409,25 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; }
       <div class="card-title">🔊 Sound Test</div>
       <div class="card-desc">Full-range audio track to test your speakers — then use the channel tester to check left and right sides independently.</div>
 
-      <!-- ── Section 1: Full-range track ── -->
-      <div class="section-label">Full Range Track — Bass · Mids · Treble</div>
       <div class="yt-wrap">
         <div id="yt-player"></div>
       </div>
-      <p class="text-muted" style="margin-bottom:1.75rem">Play the track — use the <strong style="color:#e2e8f0">Both volume</strong> slider below to control playback volume. Headphones recommended for best results.</p>
 
-      <!-- ── Section 2: L/R Channel test ── -->
-      <div class="section-label">Channel & Frequency Test — Left · Right · Both</div>
-
-      <div class="sound-controls-row">
-        <div>
-          <div class="text-muted" style="margin-bottom:.4rem">Channel</div>
-          <div class="channel-row">
-            <button class="ch-btn active" id="ch-both"  onclick="setChannel('both')">Both</button>
-            <button class="ch-btn"        id="ch-left"  onclick="setChannel('left')">◀ Left</button>
-            <button class="ch-btn"        id="ch-right" onclick="setChannel('right')">Right ▶</button>
-          </div>
+      <!-- Controls bar -->
+      <div class="snd-bar">
+        <div class="vol-row" style="flex:1;min-width:160px">
+          <label style="font-size:1rem">🔈</label>
+          <input type="range" id="vol-slider" min="0" max="100" value="80"
+                 oninput="setMasterVolume(this.value)">
+          <span id="vol-label" style="min-width:38px;font-size:.8125rem">80%</span>
         </div>
-        <div>
-          <div class="text-muted" style="margin-bottom:.4rem">Volume (per channel)</div>
-          <div class="vol-group">
-            <div class="vol-row">
-              <label style="min-width:58px;font-size:.8125rem">🔈 Both</label>
-              <input type="range" id="vol-both" min="0" max="100" value="80" oninput="setVolume('both',this.value)">
-              <span id="vol-both-lbl" style="min-width:36px;font-size:.8125rem">80%</span>
-            </div>
-            <div class="vol-row">
-              <label style="min-width:58px;font-size:.8125rem">◀ Left</label>
-              <input type="range" id="vol-left" min="0" max="100" value="80" oninput="setVolume('left',this.value)">
-              <span id="vol-left-lbl" style="min-width:36px;font-size:.8125rem">80%</span>
-            </div>
-            <div class="vol-row">
-              <label style="min-width:58px;font-size:.8125rem">Right ▶</label>
-              <input type="range" id="vol-right" min="0" max="100" value="80" oninput="setVolume('right',this.value)">
-              <span id="vol-right-lbl" style="min-width:36px;font-size:.8125rem">80%</span>
-            </div>
-          </div>
+        <div class="channel-row">
+          <button class="ch-btn" id="ch-left"  onclick="setChannel('left')">◀ Left</button>
+          <button class="ch-btn active" id="ch-both"  onclick="setChannel('both')">● Both</button>
+          <button class="ch-btn" id="ch-right" onclick="setChannel('right')">Right ▶</button>
         </div>
       </div>
-
-      <div class="freq-grid">
-        <div class="freq-card" id="fc-bass"    onclick="toggleTone('bass',80)">
-          <div class="fc-icon">🔉</div>
-          <div class="fc-name">Bass</div>
-          <div class="fc-hz">80 Hz</div>
-        </div>
-        <div class="freq-card" id="fc-lowmid"  onclick="toggleTone('lowmid',300)">
-          <div class="fc-icon">🎵</div>
-          <div class="fc-name">Low Mids</div>
-          <div class="fc-hz">300 Hz</div>
-        </div>
-        <div class="freq-card" id="fc-mid"     onclick="toggleTone('mid',1000)">
-          <div class="fc-icon">🎶</div>
-          <div class="fc-name">Mids</div>
-          <div class="fc-hz">1 000 Hz</div>
-        </div>
-        <div class="freq-card" id="fc-highmid" onclick="toggleTone('highmid',3000)">
-          <div class="fc-icon">🎼</div>
-          <div class="fc-name">High Mids</div>
-          <div class="fc-hz">3 000 Hz</div>
-        </div>
-        <div class="freq-card" id="fc-treble"  onclick="toggleTone('treble',8000)">
-          <div class="fc-icon">🔔</div>
-          <div class="fc-name">Treble</div>
-          <div class="fc-hz">8 000 Hz</div>
-        </div>
-        <div class="freq-card" id="fc-white"   onclick="toggleNoise()">
-          <div class="fc-icon">📻</div>
-          <div class="fc-name">White Noise</div>
-          <div class="fc-hz">Full spectrum</div>
-        </div>
-      </div>
-
-      <button class="btn btn-secondary" onclick="stopAll()">⏹ Stop All Tones</button>
+      <p class="ch-hint" id="ch-hint">Playing through both speakers.</p>
     </div>
   </div>
 
@@ -901,104 +807,74 @@ function stopCamera() {
 async function switchCamera() { stopCamera(); await startCamera(); }
 
 /* ══════════════════════════════════════
-   SOUND TEST  —  Tone / Channel Engine
+   SOUND TEST
 ══════════════════════════════════════ */
-let audioCtx    = null;
-let activeNodes = {};   // id → { osc|source, gain, panner, _isNoise? }
-let currentCh   = 'both';
-let volBoth = 0.80, volLeft = 0.80, volRight = 0.80;
+let audioCtx  = null;
+let testNode  = null;   // active L/R test tone node
+let currentCh = 'both';
+let masterVol = 80;     // 0-100
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
-function panValue()    { return currentCh === 'left' ? -1 : currentCh === 'right' ? 1 : 0; }
-function getActiveVol(){ return currentCh === 'left' ? volLeft : currentCh === 'right' ? volRight : volBoth; }
 
+/* ── Volume slider ── */
+function setMasterVolume(v) {
+  masterVol = +v;
+  document.getElementById('vol-label').textContent = v + '%';
+  // Drive YouTube volume
+  if (window.ytPlayer && typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(+v);
+  // Drive test tone gain if active
+  if (testNode) testNode.gain.gain.value = masterVol / 100 * 0.5;
+}
+
+/* ── Channel selector ── */
 function setChannel(ch) {
   currentCh = ch;
-  ['both','left','right'].forEach(x =>
+  ['left','both','right'].forEach(x =>
     document.getElementById('ch-' + x).classList.toggle('active', x === ch));
-  const vol = getActiveVol();
-  Object.values(activeNodes).forEach(n => {
-    if (n.panner) n.panner.pan.value = panValue();
-    if (n.gain)   n.gain.gain.value  = n._isNoise ? vol * 0.25 : vol;
-  });
-}
 
-function setVolume(ch, v) {
-  const val = v / 100;
-  if (ch === 'both')  { volBoth  = val; document.getElementById('vol-both-lbl').textContent  = v + '%'; }
-  if (ch === 'left')  { volLeft  = val; document.getElementById('vol-left-lbl').textContent  = v + '%'; }
-  if (ch === 'right') { volRight = val; document.getElementById('vol-right-lbl').textContent = v + '%'; }
-  // Update YouTube volume from the "both" slider
-  if (ch === 'both' && window.ytPlayer && typeof ytPlayer.setVolume === 'function') {
-    ytPlayer.setVolume(+v);
-  }
-  // Update live tones if they belong to the current channel
-  if (ch === currentCh) {
-    Object.values(activeNodes).forEach(n => {
-      if (n.gain) n.gain.gain.value = n._isNoise ? val * 0.25 : val;
-    });
+  stopTestTone();
+
+  if (ch === 'both') {
+    // Resume YouTube at current volume
+    if (window.ytPlayer && typeof ytPlayer.unMute === 'function') {
+      ytPlayer.unMute();
+      ytPlayer.setVolume(masterVol);
+    }
+    document.getElementById('ch-hint').textContent = 'Playing through both speakers.';
+  } else {
+    // Mute YouTube, play a gentle test tone in the chosen ear
+    if (window.ytPlayer && typeof ytPlayer.mute === 'function') ytPlayer.mute();
+    startTestTone(ch);
+    document.getElementById('ch-hint').textContent =
+      ch === 'left'
+        ? '◀ Left speaker test — you should only hear audio in your LEFT ear.'
+        : 'Right speaker test — you should only hear audio in your RIGHT ear. ▶';
   }
 }
 
-function makeToneNode(freq, type = 'sine') {
+function startTestTone(ch) {
   const ctx    = getAudioCtx();
   const osc    = ctx.createOscillator();
   const gain   = ctx.createGain();
   const panner = ctx.createStereoPanner();
-  osc.type = type; osc.frequency.value = freq;
-  gain.gain.value = getActiveVol(); panner.pan.value = panValue();
+  osc.type = 'sine';
+  osc.frequency.value = 1000;               // 1 kHz — clearly audible mid tone
+  gain.gain.value     = masterVol / 100 * 0.5;
+  panner.pan.value    = ch === 'left' ? -1 : 1;
   osc.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
   osc.start();
-  return { osc, gain, panner };
+  testNode = { osc, gain, panner };
 }
 
-function toggleTone(id, freq) {
-  const card = document.getElementById('fc-' + id);
-  if (activeNodes[id]) {
-    try { activeNodes[id].osc.stop(); } catch(e){}
-    delete activeNodes[id];
-    card.classList.remove('playing');
-  } else {
-    activeNodes[id] = makeToneNode(freq);
-    card.classList.add('playing');
+function stopTestTone() {
+  if (testNode) {
+    try { testNode.osc.stop(); } catch(e) {}
+    testNode = null;
   }
-}
-
-function toggleNoise() {
-  const card = document.getElementById('fc-white');
-  if (activeNodes['white']) {
-    try { activeNodes['white'].source.stop(); } catch(e){}
-    delete activeNodes['white'];
-    card.classList.remove('playing');
-    return;
-  }
-  const ctx = getAudioCtx();
-  const len = ctx.sampleRate * 3;
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  const source = ctx.createBufferSource(); source.buffer = buf; source.loop = true;
-  const gain   = ctx.createGain();
-  const panner = ctx.createStereoPanner();
-  gain.gain.value = getActiveVol() * 0.25; panner.pan.value = panValue();
-  source.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
-  source.start();
-  activeNodes['white'] = { source, gain, panner, _isNoise: true };
-  card.classList.add('playing');
-}
-
-function stopAll() {
-  Object.entries(activeNodes).forEach(([id, n]) => {
-    try { n.osc ? n.osc.stop() : n.source.stop(); } catch(e){}
-    const card = document.getElementById('fc-' + id);
-    if (card) card.classList.remove('playing');
-  });
-  activeNodes = {};
-  document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('playing'));
 }
 
 /* ── YouTube IFrame Player API ── */
@@ -1008,7 +884,7 @@ function onYouTubeIframeAPIReady() {
     videoId: 'iTHtXgnhqfM',
     playerVars: { rel: 0, modestbranding: 1, color: 'white' },
     events: {
-      onReady: function(e) { e.target.setVolume(Math.round(volBoth * 100)); }
+      onReady: function(e) { e.target.setVolume(masterVol); }
     }
   });
 }
