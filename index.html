@@ -183,19 +183,28 @@ body {
   background: #0f1117;
   border: 1px solid #2d3748;
   border-radius: .75rem;
-  padding: 1.25rem 1.25rem .875rem;
+  padding: 1.25rem;
   margin-bottom: 1rem;
 }
-.audio-wrap audio {
-  width: 100%;
-  height: 48px;
-  display: block;
-}
-.audio-track-label {
-  font-size: .75rem;
-  color: #4a5568;
+.audio-wrap audio { width:100%; display:block; }
+
+/* Drop zone */
+.audio-drop {
+  border: 2px dashed #4a5568;
+  border-radius: .625rem;
+  padding: 2rem 1rem;
   text-align: center;
-  margin-top: .625rem;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.audio-drop:hover, .audio-drop.drag-over { border-color:#3182ce; background:#0d1d33; }
+.audio-drop .ad-icon  { font-size:2rem; margin-bottom:.375rem; }
+.audio-drop .ad-title { font-size:.875rem; font-weight:600; color:#e2e8f0; margin-bottom:.25rem; }
+.audio-drop .ad-sub   { font-size:.75rem; color:#718096; margin-bottom:.875rem; }
+
+.audio-track-label {
+  font-size: .75rem; color: #4a5568;
+  text-align: center; margin-top: .625rem;
 }
 
 /* Controls bar below the player */
@@ -412,12 +421,23 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
       <div class="card-desc">Full-range audio track to test your speakers — then use the channel tester to check left and right sides independently.</div>
 
       <div class="audio-wrap">
-        <audio id="audio-player" crossorigin="anonymous" controls preload="none">
-          <!-- MP3 first (widest browser support), OGG fallback -->
-          <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6e/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg.mp3" type="audio/mpeg">
-          <source src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg" type="audio/ogg">
-        </audio>
-        <div class="audio-track-label">🎵 Grieg — In the Hall of the Mountain King · Public Domain · full bass–treble range</div>
+        <!-- hidden until a file is loaded -->
+        <audio id="audio-player" controls style="display:none;margin-bottom:.75rem"></audio>
+
+        <!-- Drop / browse zone (shown until a file is chosen) -->
+        <div id="audio-drop" class="audio-drop"
+             onclick="document.getElementById('audio-file').click()"
+             ondragover="adOver(event)" ondragleave="adLeave(event)" ondrop="adDrop(event)">
+          <div class="ad-icon">🎵</div>
+          <div class="ad-title">Drop an audio file here</div>
+          <div class="ad-sub">MP3, AAC, FLAC, WAV, OGG — any format your browser supports</div>
+          <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('audio-file').click()">
+            Browse File
+          </button>
+        </div>
+        <input type="file" id="audio-file" accept="audio/*" style="display:none" onchange="loadAudioFile(this.files[0])">
+
+        <div class="audio-track-label" id="audio-track-label" style="display:none"></div>
       </div>
 
       <!-- Controls bar -->
@@ -815,29 +835,48 @@ async function switchCamera() { stopCamera(); await startCamera(); }
 
 /* ══════════════════════════════════════
    SOUND TEST
-   Audio routed through Web Audio API so
-   StereoPannerNode can push it L or R.
+   Local file → Web Audio → StereoPanner
+   No external URLs, no CORS issues.
 ══════════════════════════════════════ */
 let audioCtx  = null;
-let mediaSrc  = null;   // MediaElementSourceNode — created once
+let mediaSrc  = null;   // created once per audio element lifetime
 let gainNode  = null;
 let panNode   = null;
 let currentCh = 'both';
 let masterVol = 80;
+let blobURL   = null;
 
-/* Build the Web Audio graph on first user interaction (play / channel click).
-   createMediaElementSource can only be called once per element. */
+/* ── Drop-zone helpers ── */
+function adOver(e)  { e.preventDefault(); document.getElementById('audio-drop').classList.add('drag-over'); }
+function adLeave()  { document.getElementById('audio-drop').classList.remove('drag-over'); }
+function adDrop(e)  { e.preventDefault(); adLeave(); const f = e.dataTransfer.files[0]; if (f) loadAudioFile(f); }
+
+/* ── Load a local audio file into the player ── */
+function loadAudioFile(file) {
+  if (!file || !file.type.startsWith('audio/')) return;
+  if (blobURL) URL.revokeObjectURL(blobURL);
+  blobURL = URL.createObjectURL(file);
+
+  const audio = document.getElementById('audio-player');
+  audio.src = blobURL;
+  audio.style.display = 'block';
+  document.getElementById('audio-drop').style.display = 'none';
+
+  const lbl = document.getElementById('audio-track-label');
+  lbl.textContent = '🎵 ' + file.name;
+  lbl.style.display = 'block';
+}
+
+/* ── Build the Web Audio graph (called once on first play) ── */
 function initAudioGraph() {
   const audio = document.getElementById('audio-player');
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (!mediaSrc) {
     mediaSrc = audioCtx.createMediaElementSource(audio);
     gainNode = audioCtx.createGain();
     panNode  = audioCtx.createStereoPanner();
     gainNode.gain.value = masterVol / 100;
-    panNode.pan.value   = 0;
+    panNode.pan.value   = currentCh === 'left' ? -1 : currentCh === 'right' ? 1 : 0;
     mediaSrc.connect(gainNode);
     gainNode.connect(panNode);
     panNode.connect(audioCtx.destination);
@@ -845,20 +884,19 @@ function initAudioGraph() {
   if (audioCtx.state === 'suspended') audioCtx.resume();
 }
 
-/* Volume slider — drives the gain node directly */
+/* ── Volume slider ── */
 function setMasterVolume(v) {
   masterVol = +v;
   document.getElementById('vol-label').textContent = v + '%';
   if (gainNode) gainNode.gain.value = masterVol / 100;
 }
 
-/* Channel buttons — just move the panner value; the same track plays */
+/* ── Channel buttons ── */
 function setChannel(ch) {
   currentCh = ch;
   ['left','both','right'].forEach(x =>
     document.getElementById('ch-' + x).classList.toggle('active', x === ch));
-  initAudioGraph();
-  panNode.pan.value = ch === 'left' ? -1 : ch === 'right' ? 1 : 0;
+  if (panNode) panNode.pan.value = ch === 'left' ? -1 : ch === 'right' ? 1 : 0;
   document.getElementById('ch-hint').textContent = {
     both:  'Playing through both speakers.',
     left:  '◀ Left speaker only — audio should come from your LEFT ear only.',
@@ -866,7 +904,6 @@ function setChannel(ch) {
   }[ch];
 }
 
-/* Initialise graph as soon as the user presses play */
 document.getElementById('audio-player').addEventListener('play', initAudioGraph);
 
 /* ══════════════════════════════════════
