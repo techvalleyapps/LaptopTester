@@ -183,29 +183,18 @@ body {
   background: #0f1117;
   border: 1px solid #2d3748;
   border-radius: .75rem;
-  padding: 1.25rem;
+  padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }
-.audio-wrap audio { width:100%; display:block; }
-
-/* Drop zone */
-.audio-drop {
-  border: 2px dashed #4a5568;
-  border-radius: .625rem;
-  padding: 2rem 1rem;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
-}
-.audio-drop:hover, .audio-drop.drag-over { border-color:#3182ce; background:#0d1d33; }
-.audio-drop .ad-icon  { font-size:2rem; margin-bottom:.375rem; }
-.audio-drop .ad-title { font-size:.875rem; font-weight:600; color:#e2e8f0; margin-bottom:.25rem; }
-.audio-drop .ad-sub   { font-size:.75rem; color:#718096; margin-bottom:.875rem; }
-
-.audio-track-label {
-  font-size: .75rem; color: #4a5568;
-  text-align: center; margin-top: .625rem;
-}
+.music-info { display:flex; align-items:center; gap:1rem; }
+.music-icon { font-size:2.25rem; line-height:1; }
+.music-title{ font-size:1rem; font-weight:600; color:#e2e8f0; margin-bottom:.2rem; }
+.music-sub  { font-size:.75rem; color:#718096; }
 
 /* Controls bar below the player */
 .snd-bar {
@@ -421,23 +410,14 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
       <div class="card-desc">Full-range audio track to test your speakers — then use the channel tester to check left and right sides independently.</div>
 
       <div class="audio-wrap">
-        <!-- hidden until a file is loaded -->
-        <audio id="audio-player" controls style="display:none;margin-bottom:.75rem"></audio>
-
-        <!-- Drop / browse zone (shown until a file is chosen) -->
-        <div id="audio-drop" class="audio-drop"
-             onclick="document.getElementById('audio-file').click()"
-             ondragover="adOver(event)" ondragleave="adLeave(event)" ondrop="adDrop(event)">
-          <div class="ad-icon">🎵</div>
-          <div class="ad-title">Drop an audio file here</div>
-          <div class="ad-sub">MP3, AAC, FLAC, WAV, OGG — any format your browser supports</div>
-          <button class="btn btn-primary" onclick="event.stopPropagation();document.getElementById('audio-file').click()">
-            Browse File
-          </button>
+        <div class="music-info">
+          <span class="music-icon">🎵</span>
+          <div>
+            <div class="music-title">Punjabi Pop Sample</div>
+            <div class="music-sub">128 BPM · D Major · Bhangra-style beat · Generated in-browser</div>
+          </div>
         </div>
-        <input type="file" id="audio-file" accept="audio/*" style="display:none" onchange="loadAudioFile(this.files[0])">
-
-        <div class="audio-track-label" id="audio-track-label" style="display:none"></div>
+        <button id="play-btn" class="btn btn-primary" style="font-size:.9375rem;padding:.55rem 1.5rem" onclick="toggleMusic()">▶ Play</button>
       </div>
 
       <!-- Controls bar -->
@@ -833,62 +813,263 @@ function stopCamera() {
 }
 async function switchCamera() { stopCamera(); await startCamera(); }
 
-/* ══════════════════════════════════════
-   SOUND TEST
-   Local file → Web Audio → StereoPanner
-   No external URLs, no CORS issues.
-══════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   SOUND TEST — Punjabi Pop / Bhangra Music Generator
+   Pure Web Audio API. No fetch, no upload, no external URLs.
+   Style: Diljit Dosanjh — 128 BPM, D Major, tumbi + dhol feel.
+══════════════════════════════════════════════════════════════ */
+
 let audioCtx  = null;
-let mediaSrc  = null;   // created once per audio element lifetime
-let gainNode  = null;
-let panNode   = null;
-let currentCh = 'both';
-let masterVol = 80;
-let blobURL   = null;
+let masterGain = null;
+let panNode    = null;
+let currentCh  = 'both';
+let masterVol  = 80;
+let isPlaying  = false;
 
-/* ── Drop-zone helpers ── */
-function adOver(e)  { e.preventDefault(); document.getElementById('audio-drop').classList.add('drag-over'); }
-function adLeave()  { document.getElementById('audio-drop').classList.remove('drag-over'); }
-function adDrop(e)  { e.preventDefault(); adLeave(); const f = e.dataTransfer.files[0]; if (f) loadAudioFile(f); }
+/* ── Scheduler state ── */
+let schedTimer    = null;
+let currentStep   = 0;
+let nextNoteTime  = 0.0;
+const BPM         = 128;
+const STEP_SEC    = 60 / BPM / 2;   // 16th-note at 128 BPM ≈ 0.234 s
+const TOTAL_STEPS = 32;              // 2-bar loop
+const LOOKAHEAD   = 0.1;            // seconds ahead to schedule
+const SCHED_INT   = 50;             // ms — scheduler polling interval
 
-/* ── Load a local audio file into the player ── */
-function loadAudioFile(file) {
-  if (!file || !file.type.startsWith('audio/')) return;
-  if (blobURL) URL.revokeObjectURL(blobURL);
-  blobURL = URL.createObjectURL(file);
+/* ── Note frequencies (D major: D E F# G A B C#) ── */
+const NOTE = {
+  D2:73.42, A2:110.00, D3:146.83, E3:164.81, Fs3:185.00,
+  G3:196.00, A3:220.00, B3:246.94, D4:293.66, E4:329.63,
+  Fs4:369.99, G4:392.00, A4:440.00, B4:493.88, Cs5:554.37,
+  D5:587.33,
+};
 
-  const audio = document.getElementById('audio-player');
-  audio.src = blobURL;
-  audio.style.display = 'block';
-  document.getElementById('audio-drop').style.display = 'none';
+/* ── Percussion patterns (32 steps = 2 bars at 16th-note resolution) ── */
+// Kick (dhol low boom) — hits on 1, 3, 9, 11, 17, 19, 25, 27 (1-indexed → 0-indexed)
+const KICK_PAT  = [1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0,
+                   1,0,0,0, 1,0,0,0, 1,0,0,0, 1,0,0,0];
+// Dhol high snare — beats 3 & 7 of each bar (steps 4,12,20,28)
+const SNARE_PAT = [0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0,
+                   0,0,0,0, 1,0,0,0, 0,0,0,0, 1,0,0,0];
+// Closed hi-hat — every 8th note
+const HIHAT_PAT = [1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0,
+                   1,0,1,0, 1,0,1,0, 1,0,1,0, 1,0,1,0];
+// Open hi-hat — before snare
+const OHAT_PAT  = [0,0,0,1, 0,0,0,0, 0,0,0,1, 0,0,0,0,
+                   0,0,0,1, 0,0,0,0, 0,0,0,1, 0,0,0,0];
 
-  const lbl = document.getElementById('audio-track-label');
-  lbl.textContent = '🎵 ' + file.name;
-  lbl.style.display = 'block';
+/* ── Bass line [step, freq] (0-indexed steps) ── */
+const BASS_SEQ = [
+  [0,NOTE.D2],[4,NOTE.A2],[8,NOTE.D2],[10,NOTE.G3],
+  [12,NOTE.A2],[16,NOTE.D2],[20,NOTE.A2],[24,NOTE.D2],[28,NOTE.G3],
+];
+
+/* ── Tumbi melody [step, freq, durationSteps] ── */
+const TUMBI_SEQ = [
+  [0,NOTE.D4,2],[2,NOTE.E4,1],[3,NOTE.Fs4,1],
+  [4,NOTE.G4,2],[6,NOTE.A4,2],
+  [8,NOTE.B4,1],[9,NOTE.A4,1],[10,NOTE.G4,2],
+  [12,NOTE.Fs4,1],[13,NOTE.E4,1],[14,NOTE.D4,2],
+  [16,NOTE.A4,2],[18,NOTE.G4,1],[19,NOTE.Fs4,1],
+  [20,NOTE.E4,2],[22,NOTE.D4,2],
+  [24,NOTE.Fs4,1],[25,NOTE.G4,1],[26,NOTE.A4,2],
+  [28,NOTE.D5,2],[30,NOTE.Cs5,1],[31,NOTE.B4,1],
+];
+
+/* ── Chord pad [step, [freqs], durationSteps] ── */
+const PAD_SEQ = [
+  [0,  [NOTE.D3,NOTE.Fs3,NOTE.A3], 8],
+  [8,  [NOTE.G3,NOTE.B3,NOTE.D4],  8],
+  [16, [NOTE.A3,NOTE.Cs5,NOTE.E4], 8],
+  [24, [NOTE.G3,NOTE.B3,NOTE.D4],  8],
+];
+
+/* ════════ Synthesis functions ════════ */
+
+function playKick(t) {
+  const ctx = audioCtx;
+  const osc = ctx.createOscillator();
+  const env = ctx.createGain();
+  osc.connect(env); env.connect(masterGain);
+  osc.frequency.setValueAtTime(160, t);
+  osc.frequency.exponentialRampToValueAtTime(40, t + 0.25);
+  env.gain.setValueAtTime(1.2, t);
+  env.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+  osc.start(t); osc.stop(t + 0.32);
 }
 
-/* ── Build the Web Audio graph (called once on first play) ── */
-function initAudioGraph() {
-  const audio = document.getElementById('audio-player');
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (!mediaSrc) {
-    mediaSrc = audioCtx.createMediaElementSource(audio);
-    gainNode = audioCtx.createGain();
-    panNode  = audioCtx.createStereoPanner();
-    gainNode.gain.value = masterVol / 100;
-    panNode.pan.value   = currentCh === 'left' ? -1 : currentCh === 'right' ? 1 : 0;
-    mediaSrc.connect(gainNode);
-    gainNode.connect(panNode);
-    panNode.connect(audioCtx.destination);
+function playSnare(t) {
+  const ctx = audioCtx;
+  // Noise layer
+  const bufSize = ctx.sampleRate * 0.18 | 0;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const nenv = ctx.createGain();
+  const nhp  = ctx.createBiquadFilter();
+  nhp.type = 'highpass'; nhp.frequency.value = 1800;
+  noise.connect(nhp); nhp.connect(nenv); nenv.connect(masterGain);
+  nenv.gain.setValueAtTime(0.6, t);
+  nenv.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+  noise.start(t); noise.stop(t + 0.2);
+  // Tone layer
+  const osc = ctx.createOscillator();
+  const oenv = ctx.createGain();
+  osc.connect(oenv); oenv.connect(masterGain);
+  osc.frequency.setValueAtTime(220, t);
+  oenv.gain.setValueAtTime(0.4, t);
+  oenv.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  osc.start(t); osc.stop(t + 0.12);
+}
+
+function playHihat(t, open) {
+  const ctx = audioCtx;
+  const bufSize = ctx.sampleRate * (open ? 0.25 : 0.05) | 0;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const hp  = ctx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 7000;
+  const env = ctx.createGain();
+  src.connect(hp); hp.connect(env); env.connect(masterGain);
+  env.gain.setValueAtTime(open ? 0.25 : 0.18, t);
+  env.gain.exponentialRampToValueAtTime(0.001, t + (open ? 0.25 : 0.04));
+  src.start(t); src.stop(t + (open ? 0.27 : 0.06));
+}
+
+function playTumbi(t, freq, dur) {
+  const ctx = audioCtx;
+  const osc  = ctx.createOscillator();
+  const dist = ctx.createWaveShaper();
+  const env  = ctx.createGain();
+  // Mild distortion for tumbi string bite
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i * 2) / 256 - 1;
+    curve[i] = (Math.PI + 180) * x / (Math.PI + 180 * Math.abs(x));
   }
+  dist.curve = curve;
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(freq, t);
+  osc.connect(dist); dist.connect(env); env.connect(masterGain);
+  const d = dur * STEP_SEC;
+  env.gain.setValueAtTime(0.0, t);
+  env.gain.linearRampToValueAtTime(0.45, t + 0.01);
+  env.gain.exponentialRampToValueAtTime(0.001, t + d * 0.92);
+  osc.start(t); osc.stop(t + d);
+}
+
+function playBass(t, freq) {
+  const ctx = audioCtx;
+  const osc = ctx.createOscillator();
+  const lp  = ctx.createBiquadFilter();
+  const env = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = freq;
+  lp.type = 'lowpass'; lp.frequency.value = 400;
+  osc.connect(lp); lp.connect(env); env.connect(masterGain);
+  env.gain.setValueAtTime(0.55, t);
+  env.gain.exponentialRampToValueAtTime(0.001, t + STEP_SEC * 3.8);
+  osc.start(t); osc.stop(t + STEP_SEC * 4);
+}
+
+function playPad(t, freqs, dur) {
+  const ctx = audioCtx;
+  const d = dur * STEP_SEC;
+  freqs.forEach(freq => {
+    const osc = ctx.createOscillator();
+    const env = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    osc.connect(env); env.connect(masterGain);
+    env.gain.setValueAtTime(0.0, t);
+    env.gain.linearRampToValueAtTime(0.1, t + 0.08);
+    env.gain.setValueAtTime(0.1, t + d - 0.1);
+    env.gain.linearRampToValueAtTime(0.0, t + d);
+    osc.start(t); osc.stop(t + d + 0.05);
+  });
+}
+
+/* ════════ Scheduler ════════ */
+
+function scheduleStep(step, time) {
+  // Percussion
+  if (KICK_PAT[step])  playKick(time);
+  if (SNARE_PAT[step]) playSnare(time);
+  if (HIHAT_PAT[step]) playHihat(time, false);
+  if (OHAT_PAT[step])  playHihat(time, true);
+
+  // Bass — trigger on matching step
+  BASS_SEQ.forEach(([s, f]) => { if (s === step) playBass(time, f); });
+
+  // Tumbi melody — trigger on matching step
+  TUMBI_SEQ.forEach(([s, f, d]) => { if (s === step) playTumbi(time, f, d); });
+
+  // Chord pads — trigger on matching step
+  PAD_SEQ.forEach(([s, fs, d]) => { if (s === step) playPad(time, fs, d); });
+}
+
+function runScheduler() {
+  while (nextNoteTime < audioCtx.currentTime + LOOKAHEAD) {
+    scheduleStep(currentStep % TOTAL_STEPS, nextNoteTime);
+    currentStep++;
+    nextNoteTime += STEP_SEC;
+  }
+  schedTimer = setTimeout(runScheduler, SCHED_INT);
+}
+
+/* ════════ Play / Stop ════════ */
+
+function startMusic() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  masterGain = audioCtx.createGain();
+  panNode    = audioCtx.createStereoPanner();
+  masterGain.gain.value = masterVol / 100;
+  panNode.pan.value     = currentCh === 'left' ? -1 : currentCh === 'right' ? 1 : 0;
+  masterGain.connect(panNode);
+  panNode.connect(audioCtx.destination);
+
+  currentStep  = 0;
+  nextNoteTime = audioCtx.currentTime + 0.05;
+  runScheduler();
+  isPlaying = true;
+
+  const btn = document.getElementById('play-btn');
+  if (btn) { btn.textContent = '⏹ Stop'; btn.classList.replace('btn-primary','btn-danger'); }
+}
+
+function stopMusic() {
+  clearTimeout(schedTimer);
+  schedTimer = null;
+  isPlaying  = false;
+  // Fade out masterGain to avoid clicks
+  if (masterGain) {
+    masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+  }
+  setTimeout(() => {
+    if (masterGain) { try { masterGain.disconnect(); } catch(e){} masterGain = null; }
+    if (panNode)    { try { panNode.disconnect();    } catch(e){} panNode    = null; }
+  }, 400);
+
+  const btn = document.getElementById('play-btn');
+  if (btn) { btn.textContent = '▶ Play'; btn.classList.replace('btn-danger','btn-primary'); }
+}
+
+function toggleMusic() {
+  if (isPlaying) stopMusic(); else startMusic();
 }
 
 /* ── Volume slider ── */
 function setMasterVolume(v) {
   masterVol = +v;
   document.getElementById('vol-label').textContent = v + '%';
-  if (gainNode) gainNode.gain.value = masterVol / 100;
+  if (masterGain) masterGain.gain.value = masterVol / 100;
 }
 
 /* ── Channel buttons ── */
@@ -903,8 +1084,6 @@ function setChannel(ch) {
     right: 'Right speaker only — audio should come from your RIGHT ear only. ▶',
   }[ch];
 }
-
-document.getElementById('audio-player').addEventListener('play', initAudioGraph);
 
 /* ══════════════════════════════════════
    BATTERY — Live gauge (Battery API)
