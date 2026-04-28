@@ -179,22 +179,24 @@ body {
 .info-table td:last-child  { color:#f7fafc; font-weight:500; word-break:break-all; }
 
 /* ─────────────────── SOUND ─────────────────── */
-/* YouTube embed */
-.yt-wrap {
-  position: relative;
-  width: 100%;
+.audio-wrap {
+  background: #0f1117;
+  border: 1px solid #2d3748;
   border-radius: .75rem;
-  overflow: hidden;
-  background: #000;
+  padding: 1.25rem 1.25rem .875rem;
   margin-bottom: 1rem;
 }
-.yt-wrap iframe {
+.audio-wrap audio {
+  width: 100%;
+  height: 48px;
   display: block;
-  width: 100% !important;
-  height: 240px !important;
-  border: none;
 }
-#yt-player { height: 240px; background: #000; }
+.audio-track-label {
+  font-size: .75rem;
+  color: #4a5568;
+  text-align: center;
+  margin-top: .625rem;
+}
 
 /* Controls bar below the player */
 .snd-bar {
@@ -409,8 +411,13 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
       <div class="card-title">🔊 Sound Test</div>
       <div class="card-desc">Full-range audio track to test your speakers — then use the channel tester to check left and right sides independently.</div>
 
-      <div class="yt-wrap">
-        <div id="yt-player"></div>
+      <div class="audio-wrap">
+        <audio id="audio-player" crossorigin="anonymous" controls preload="none">
+          <!-- MP3 first (widest browser support), OGG fallback -->
+          <source src="https://upload.wikimedia.org/wikipedia/commons/transcoded/6/6e/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg.mp3" type="audio/mpeg">
+          <source src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Grieg_-_In_the_Hall_of_the_Mountain_King.ogg" type="audio/ogg">
+        </audio>
+        <div class="audio-track-label">🎵 Grieg — In the Hall of the Mountain King · Public Domain · full bass–treble range</div>
       </div>
 
       <!-- Controls bar -->
@@ -808,91 +815,59 @@ async function switchCamera() { stopCamera(); await startCamera(); }
 
 /* ══════════════════════════════════════
    SOUND TEST
+   Audio routed through Web Audio API so
+   StereoPannerNode can push it L or R.
 ══════════════════════════════════════ */
 let audioCtx  = null;
-let testNode  = null;   // active L/R test tone node
+let mediaSrc  = null;   // MediaElementSourceNode — created once
+let gainNode  = null;
+let panNode   = null;
 let currentCh = 'both';
-let masterVol = 80;     // 0-100
+let masterVol = 80;
 
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+/* Build the Web Audio graph on first user interaction (play / channel click).
+   createMediaElementSource can only be called once per element. */
+function initAudioGraph() {
+  const audio = document.getElementById('audio-player');
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (!mediaSrc) {
+    mediaSrc = audioCtx.createMediaElementSource(audio);
+    gainNode = audioCtx.createGain();
+    panNode  = audioCtx.createStereoPanner();
+    gainNode.gain.value = masterVol / 100;
+    panNode.pan.value   = 0;
+    mediaSrc.connect(gainNode);
+    gainNode.connect(panNode);
+    panNode.connect(audioCtx.destination);
+  }
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
 }
 
-/* ── Volume slider ── */
+/* Volume slider — drives the gain node directly */
 function setMasterVolume(v) {
   masterVol = +v;
   document.getElementById('vol-label').textContent = v + '%';
-  // Drive YouTube volume
-  if (window.ytPlayer && typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(+v);
-  // Drive test tone gain if active
-  if (testNode) testNode.gain.gain.value = masterVol / 100 * 0.5;
+  if (gainNode) gainNode.gain.value = masterVol / 100;
 }
 
-/* ── Channel selector ── */
+/* Channel buttons — just move the panner value; the same track plays */
 function setChannel(ch) {
   currentCh = ch;
   ['left','both','right'].forEach(x =>
     document.getElementById('ch-' + x).classList.toggle('active', x === ch));
-
-  stopTestTone();
-
-  if (ch === 'both') {
-    // Resume YouTube at current volume
-    if (window.ytPlayer && typeof ytPlayer.unMute === 'function') {
-      ytPlayer.unMute();
-      ytPlayer.setVolume(masterVol);
-    }
-    document.getElementById('ch-hint').textContent = 'Playing through both speakers.';
-  } else {
-    // Mute YouTube, play a gentle test tone in the chosen ear
-    if (window.ytPlayer && typeof ytPlayer.mute === 'function') ytPlayer.mute();
-    startTestTone(ch);
-    document.getElementById('ch-hint').textContent =
-      ch === 'left'
-        ? '◀ Left speaker test — you should only hear audio in your LEFT ear.'
-        : 'Right speaker test — you should only hear audio in your RIGHT ear. ▶';
-  }
+  initAudioGraph();
+  panNode.pan.value = ch === 'left' ? -1 : ch === 'right' ? 1 : 0;
+  document.getElementById('ch-hint').textContent = {
+    both:  'Playing through both speakers.',
+    left:  '◀ Left speaker only — audio should come from your LEFT ear only.',
+    right: 'Right speaker only — audio should come from your RIGHT ear only. ▶',
+  }[ch];
 }
 
-function startTestTone(ch) {
-  const ctx    = getAudioCtx();
-  const osc    = ctx.createOscillator();
-  const gain   = ctx.createGain();
-  const panner = ctx.createStereoPanner();
-  osc.type = 'sine';
-  osc.frequency.value = 1000;               // 1 kHz — clearly audible mid tone
-  gain.gain.value     = masterVol / 100 * 0.5;
-  panner.pan.value    = ch === 'left' ? -1 : 1;
-  osc.connect(gain); gain.connect(panner); panner.connect(ctx.destination);
-  osc.start();
-  testNode = { osc, gain, panner };
-}
-
-function stopTestTone() {
-  if (testNode) {
-    try { testNode.osc.stop(); } catch(e) {}
-    testNode = null;
-  }
-}
-
-/* ── YouTube IFrame Player API ── */
-var ytPlayer = null;
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player('yt-player', {
-    videoId: 'iTHtXgnhqfM',
-    playerVars: { rel: 0, modestbranding: 1, color: 'white' },
-    events: {
-      onReady: function(e) { e.target.setVolume(masterVol); }
-    }
-  });
-}
-(function loadYTAPI() {
-  var s = document.createElement('script');
-  s.src = 'https://www.youtube.com/iframe_api';
-  document.head.appendChild(s);
-})();
+/* Initialise graph as soon as the user presses play */
+document.getElementById('audio-player').addEventListener('play', initAudioGraph);
 
 /* ══════════════════════════════════════
    BATTERY — Live gauge (Battery API)
