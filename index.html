@@ -372,9 +372,10 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
       <div class="card-title">📷 Camera Test</div>
       <div class="card-desc">Preview your webcam live and inspect device details.</div>
       <div class="flex-row">
-        <button class="btn btn-primary"  id="cam-start" onclick="startCamera()">▶ Start Camera</button>
-        <button class="btn btn-danger"   id="cam-stop"  onclick="stopCamera()" style="display:none">⏹ Stop</button>
-        <select class="form-select"      id="cam-select" onchange="switchCamera()" style="display:none"></select>
+        <button class="btn btn-primary"   id="cam-start"  onclick="startCamera()">▶ Start Camera</button>
+        <button class="btn btn-danger"    id="cam-stop"   onclick="stopCamera()"  style="display:none">⏹ Stop</button>
+        <button class="btn btn-secondary" id="cam-switch" onclick="switchCameraNext()" style="display:none">🔄 Switch Camera</button>
+        <select class="form-select"       id="cam-select" onchange="switchCameraTo(this.value)" style="display:none"></select>
       </div>
       <div class="camera-grid">
         <div>
@@ -762,46 +763,129 @@ if (isMac) switchLayout('mac'); else { buildKeyboard(); buildNumpad(); updateKbS
 ══════════════════════════════════════ */
 let camStream = null;
 
+let camDevices    = [];   // all videoinput devices
+let camDeviceIdx  = 0;    // index of currently active camera
+
 async function startCamera() {
   document.getElementById('ci-status').textContent = 'Requesting…';
   try {
+    /* First call: get permission with a quick stream, then enumerate (labels need permission) */
+    const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    tempStream.getTracks().forEach(t => t.stop());
+
     const devices = await navigator.mediaDevices.enumerateDevices();
-    const vdevs   = devices.filter(d => d.kind === 'videoinput');
-    const sel     = document.getElementById('cam-select');
+    camDevices = devices.filter(d => d.kind === 'videoinput');
+
+    /* Populate the select dropdown */
+    const sel = document.getElementById('cam-select');
     sel.innerHTML = '';
-    vdevs.forEach((d, i) => {
+    camDevices.forEach((d, i) => {
       const o = document.createElement('option');
-      o.value = d.deviceId; o.text = d.label || 'Camera ' + (i + 1);
+      o.value = d.deviceId;
+      /* Try to label as Front / Rear when facingMode hint available in label */
+      let label = d.label || ('Camera ' + (i + 1));
+      if (/front|user/i.test(label))  label = '📷 Front — ' + label;
+      else if (/back|rear|environment/i.test(label)) label = '📷 Rear — ' + label;
+      o.text = label;
       sel.appendChild(o);
     });
-    if (vdevs.length > 1) sel.style.display = 'inline-block';
 
+    const multi = camDevices.length > 1;
+    sel.style.display          = multi ? 'inline-block' : 'none';
+    document.getElementById('cam-switch').style.display = multi ? 'inline-flex' : 'none';
+
+    /* Start with first camera */
+    camDeviceIdx = 0;
+    sel.selectedIndex = 0;
+    await applyCameraDevice(camDevices[0]?.deviceId);
+
+  } catch(err) {
+    document.getElementById('ci-status').innerHTML =
+      '<span class="text-red">✗ ' + esc(err.message) + '</span>';
+  }
+}
+
+async function applyCameraDevice(deviceId) {
+  document.getElementById('ci-status').textContent = 'Switching…';
+  /* Stop existing stream */
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+
+  try {
     camStream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: sel.value ? { ideal: sel.value } : undefined,
-               width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } }
+      video: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 }
+      }
     });
+
     const video = document.getElementById('cam-video');
     video.srcObject = camStream;
     video.style.display = 'block';
     document.getElementById('cam-placeholder').style.display = 'none';
-    document.getElementById('cam-start').style.display = 'none';
-    document.getElementById('cam-stop').style.display  = 'inline-flex';
+    document.getElementById('cam-start').style.display       = 'none';
+    document.getElementById('cam-stop').style.display        = 'inline-flex';
+
+    /* Sync dropdown to current device */
+    const sel = document.getElementById('cam-select');
+    if (deviceId) {
+      for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === deviceId) { sel.selectedIndex = i; break; }
+      }
+    }
 
     video.onloadedmetadata = () => {
       const track    = camStream.getVideoTracks()[0];
       const settings = track.getSettings();
-      const w = settings.width || video.videoWidth, h = settings.height || video.videoHeight;
-      const gcd = (a, b) => b ? gcd(b, a % b) : a, d = gcd(w, h);
-      document.getElementById('ci-status').innerHTML = '<span class="text-green">✓ Active</span>';
-      document.getElementById('ci-device').textContent  = track.label || 'Unknown';
-      document.getElementById('ci-res').textContent     = w + ' × ' + h + ' px';
-      document.getElementById('ci-fps').textContent     = (settings.frameRate ? settings.frameRate.toFixed(1) : '—') + ' fps';
-      document.getElementById('ci-aspect').textContent  = (w/d) + ':' + (h/d);
-      document.getElementById('ci-facing').textContent  = settings.facingMode || 'N/A';
+      const w = settings.width  || video.videoWidth;
+      const h = settings.height || video.videoHeight;
+      const gcd = (a, b) => b ? gcd(b, a % b) : a;
+      const g = gcd(w, h);
+      const facing = settings.facingMode;
+
+      document.getElementById('ci-status').innerHTML =
+        '<span class="text-green">✓ Active</span>';
+      document.getElementById('ci-device').textContent =
+        track.label || ('Camera ' + (camDeviceIdx + 1));
+      document.getElementById('ci-res').textContent    = w + ' × ' + h + ' px';
+      document.getElementById('ci-fps').textContent    =
+        (settings.frameRate ? settings.frameRate.toFixed(1) : '—') + ' fps';
+      document.getElementById('ci-aspect').textContent = (w/g) + ':' + (h/g);
+      document.getElementById('ci-facing').textContent =
+        facing === 'user'        ? '📷 Front'
+        : facing === 'environment' ? '📷 Rear'
+        : facing || 'N/A';
+
+      /* Update switch button label */
+      const btn = document.getElementById('cam-switch');
+      if (camDevices.length > 1) {
+        const nextIdx  = (camDeviceIdx + 1) % camDevices.length;
+        const nextDev  = camDevices[nextIdx];
+        const nextLabel = nextDev
+          ? (/back|rear|environment/i.test(nextDev.label) ? 'Rear' :
+             /front|user/i.test(nextDev.label)            ? 'Front' :
+             'Camera ' + (nextIdx + 1))
+          : 'Next';
+        btn.textContent = '🔄 Switch to ' + nextLabel;
+      }
     };
   } catch(err) {
-    document.getElementById('ci-status').innerHTML = '<span class="text-red">✗ ' + esc(err.message) + '</span>';
+    document.getElementById('ci-status').innerHTML =
+      '<span class="text-red">✗ ' + esc(err.message) + '</span>';
   }
+}
+
+/* Cycle to the next camera in the list */
+async function switchCameraNext() {
+  if (!camDevices.length) return;
+  camDeviceIdx = (camDeviceIdx + 1) % camDevices.length;
+  await applyCameraDevice(camDevices[camDeviceIdx].deviceId);
+}
+
+/* Switch to a specific camera from the dropdown */
+async function switchCameraTo(deviceId) {
+  const idx = camDevices.findIndex(d => d.deviceId === deviceId);
+  if (idx !== -1) camDeviceIdx = idx;
+  await applyCameraDevice(deviceId);
 }
 
 function stopCamera() {
@@ -809,12 +893,12 @@ function stopCamera() {
   const video = document.getElementById('cam-video');
   video.srcObject = null; video.style.display = 'none';
   document.getElementById('cam-placeholder').style.display = 'block';
-  document.getElementById('cam-start').style.display = 'inline-flex';
-  document.getElementById('cam-stop').style.display  = 'none';
+  document.getElementById('cam-start').style.display  = 'inline-flex';
+  document.getElementById('cam-stop').style.display   = 'none';
+  document.getElementById('cam-switch').style.display = 'none';
   document.getElementById('cam-select').style.display = 'none';
-  document.getElementById('ci-status').textContent = 'Stopped';
+  document.getElementById('ci-status').textContent    = 'Stopped';
 }
-async function switchCamera() { stopCamera(); await startCamera(); }
 
 /* ══════════════════════════════════════════════════════════════
    SOUND TEST — Punjabi Pop Sample
