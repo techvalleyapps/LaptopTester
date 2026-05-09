@@ -204,6 +204,9 @@ body {
   flex-wrap: wrap;
   margin-bottom: .625rem;
 }
+.seek-row { display:flex; align-items:center; gap:.75rem; margin-bottom:.75rem; }
+.seek-time { font-size:.75rem; color:#718096; font-variant-numeric:tabular-nums; min-width:2.4rem; white-space:nowrap; }
+.seek-row input[type=range] { flex:1; accent-color:#3182ce; height:4px; cursor:pointer; }
 .vol-row { display:flex; align-items:center; gap:.75rem; }
 .vol-row label { font-size:.8125rem; color:#718096; white-space:nowrap; }
 input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:120px; }
@@ -422,6 +425,15 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
           </div>
         </div>
         <button id="play-btn" class="btn btn-primary" style="font-size:.9375rem;padding:.55rem 1.5rem" onclick="toggleMusic()">▶ Play</button>
+      </div>
+
+      <!-- Seek bar -->
+      <div class="seek-row">
+        <span id="seek-cur" class="seek-time">0:00</span>
+        <input type="range" id="seek-bar" min="0" max="100" value="0" step="0.1"
+               oninput="seekTrack(this.value)" onmousedown="seekDragging=true" onmouseup="seekDragging=false"
+               ontouchstart="seekDragging=true" ontouchend="seekDragging=false">
+        <span id="seek-dur" class="seek-time">0:00</span>
       </div>
 
       <!-- Controls bar -->
@@ -906,12 +918,14 @@ function stopCamera() {
    Volume + L/R channel control via AudioContext graph.
 ══════════════════════════════════════════════════════════════ */
 
-let audioCtx  = null;
-let mediaSrc  = null;   // MediaElementSource — created once per audio element
+let audioCtx   = null;
+let mediaSrc   = null;
 let masterGain = null;
 let panNode    = null;
 let currentCh  = 'both';
 let masterVol  = 80;
+let seekDragging = false;
+let seekRafId    = null;
 
 /* ── Build Web Audio graph on first play ── */
 function initAudioGraph() {
@@ -939,13 +953,63 @@ function toggleMusic() {
     audio.play();
     btn.textContent = '⏹ Stop';
     btn.classList.replace('btn-primary', 'btn-danger');
+    startSeekTicker();
   } else {
     audio.pause();
     audio.currentTime = 0;
     btn.textContent = '▶ Play';
     btn.classList.replace('btn-danger', 'btn-primary');
+    stopSeekTicker();
+    updateSeekUI(audio);
   }
 }
+
+/* ── Seek bar helpers ── */
+function fmtTime(s) {
+  if (!isFinite(s) || isNaN(s)) return '0:00';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return m + ':' + String(sec).padStart(2, '0');
+}
+
+function updateSeekUI(audio) {
+  const bar = document.getElementById('seek-bar');
+  const cur = document.getElementById('seek-cur');
+  const dur = document.getElementById('seek-dur');
+  const duration = audio.duration || 0;
+  if (duration > 0 && !seekDragging) {
+    bar.value = (audio.currentTime / duration) * 100;
+  }
+  cur.textContent = fmtTime(audio.currentTime);
+  dur.textContent = fmtTime(duration);
+}
+
+function startSeekTicker() {
+  const audio = document.getElementById('audio-player');
+  const tick = () => {
+    updateSeekUI(audio);
+    seekRafId = requestAnimationFrame(tick);
+  };
+  cancelAnimationFrame(seekRafId);
+  seekRafId = requestAnimationFrame(tick);
+}
+
+function stopSeekTicker() {
+  cancelAnimationFrame(seekRafId);
+  seekRafId = null;
+}
+
+function seekTrack(val) {
+  const audio = document.getElementById('audio-player');
+  if (audio.duration) {
+    audio.currentTime = (val / 100) * audio.duration;
+  }
+}
+
+/* Set duration label once metadata loads */
+document.getElementById('audio-player').addEventListener('loadedmetadata', () => {
+  updateSeekUI(document.getElementById('audio-player'));
+});
 
 /* ── Volume slider ── */
 function setMasterVolume(v) {
