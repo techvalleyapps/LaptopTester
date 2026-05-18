@@ -277,6 +277,38 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
 .form-input:focus, .form-select:focus { outline:none; border-color:#3182ce; }
 .mt-sm { margin-top:.5rem; }  .mt-md { margin-top:1rem; }
 
+/* ── OS tabs (battery) ── */
+.bat-os-row { display:flex; gap:.5rem; margin-bottom:1.25rem; align-items:center; }
+.bat-os-btn {
+  padding:.28rem .75rem; border:1px solid #4a5568; border-radius:.375rem;
+  background:#2d3748; color:#a0aec0; cursor:pointer;
+  font-size:.75rem; font-weight:500; transition:background .15s;
+}
+.bat-os-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
+
+/* Mac paste area */
+.mac-paste-area {
+  width:100%; min-height:130px; background:#0d1117;
+  border:1px solid #2d3748; border-radius:.5rem;
+  color:#76e4f7; font-family:'Consolas','Courier New',monospace;
+  font-size:.75rem; padding:.75rem; resize:vertical;
+  margin-bottom:.75rem; box-sizing:border-box;
+}
+.mac-paste-area:focus { outline:none; border-color:#3182ce; }
+.mac-open-box {
+  background:#0d1117; border:1px solid #2d3748; border-radius:.5rem;
+  padding:.875rem 1rem; margin-bottom:1rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:.75rem; flex-wrap:wrap;
+}
+.mac-open-label { font-size:.8125rem; color:#a0aec0; }
+.mac-shortcut { display:flex; gap:.375rem; flex-wrap:wrap; align-items:center; margin-top:.3rem; font-size:.8125rem; color:#718096; }
+kbd {
+  display:inline-block; padding:.1rem .45rem; background:#2d3748;
+  border:1px solid #4a5568; border-radius:.3rem;
+  font-family:'Consolas','Courier New',monospace; font-size:.7rem; color:#e2e8f0;
+}
+
 /* ── Steps ── */
 .step-block { display:flex; gap:1rem; margin-bottom:1.5rem; }
 .step-num {
@@ -477,96 +509,198 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
       </div>
     </div>
 
-    <!-- Health report uploader -->
+    <!-- Health report analyser -->
     <div class="card">
       <div class="card-title">🩺 Battery Health — Report Analyser</div>
-      <div class="card-desc">Generate the Windows battery report, upload it here, and the site instantly calculates your battery health.</div>
 
-      <!-- Step 1 -->
-      <div class="step-block">
-        <div class="step-num">1</div>
-        <div class="step-body">
-          <div class="step-title">Generate the battery report</div>
-          <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#76e4f7">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
-          <div class="cmd-box">
-            <code>powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"</code>
-            <button class="copy-btn" data-cmd='powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"' onclick="copyCmd(this)">Copy</button>
+      <!-- OS tabs -->
+      <div class="bat-os-row">
+        <span style="font-size:.75rem;color:#718096">OS:</span>
+        <button class="bat-os-btn active" id="bat-os-win" onclick="switchBatOS('win')">⊞ Windows</button>
+        <button class="bat-os-btn"        id="bat-os-mac" onclick="switchBatOS('mac')">⌘ Mac</button>
+      </div>
+
+      <!-- ── WINDOWS section ── -->
+      <div id="bat-win-section">
+        <div class="card-desc" style="margin-bottom:1.25rem">Generate the Windows battery report, upload it here, and the site instantly calculates your battery health.</div>
+        <div class="step-block">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Generate the battery report</div>
+            <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#76e4f7">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
+            <div class="cmd-box">
+              <code>powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"</code>
+              <button class="copy-btn" data-cmd='powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"' onclick="copyCmd(this)">Copy</button>
+            </div>
+            <div class="step-hint" style="margin-top:.5rem">Saves <strong>battery-report.html</strong> to your Downloads folder.</div>
           </div>
-          <div class="step-hint" style="margin-top:.5rem">This saves <strong>battery-report.html</strong> to your Downloads folder (e.g. <code style="color:#76e4f7">C:\Users\YourName\Downloads\</code>).</div>
+        </div>
+        <div class="step-block">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Upload the report file</div>
+            <input type="file" id="report-file" accept=".html,.htm" style="display:none" onchange="handleReportFile(this.files[0])">
+            <div class="report-drop" id="report-drop"
+                 onclick="document.getElementById('report-file').click()"
+                 ondragover="rdOver(event)" ondragleave="rdLeave(event)" ondrop="rdDrop(event)">
+              <div class="rd-icon">📄</div>
+              <div class="rd-title">Drop battery-report.html here</div>
+              <div class="rd-sub">or click to browse</div>
+              <button class="btn btn-secondary" onclick="event.stopPropagation();document.getElementById('report-file').click()">Browse File</button>
+            </div>
+          </div>
+        </div>
+        <div id="report-results" style="display:none">
+          <div class="section-label">Results</div>
+          <div class="result-grid">
+            <div class="result-box">
+              <div class="result-box-title">Battery Info</div>
+              <table class="info-table" id="res-info-table"></table>
+            </div>
+            <div class="result-box">
+              <div class="result-box-title">Capacity &amp; Health</div>
+              <table class="info-table" style="margin-bottom:.875rem" id="res-cap-table"></table>
+              <div class="health-label-row"><span>Battery Health</span><span id="res-health-pct" style="font-weight:700">—</span></div>
+              <div class="health-bar"><div class="health-fill" id="res-health-fill" style="width:0%"></div></div>
+              <p class="health-msg" id="res-health-msg"></p>
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="resetReportUpload()">↺ Upload another report</button>
         </div>
       </div>
 
-      <!-- Step 2 -->
-      <div class="step-block">
-        <div class="step-num">2</div>
-        <div class="step-body">
-          <div class="step-title">Upload the report file</div>
-          <input type="file" id="report-file" accept=".html,.htm" style="display:none" onchange="handleReportFile(this.files[0])">
-          <div class="report-drop" id="report-drop"
-               onclick="document.getElementById('report-file').click()"
-               ondragover="rdOver(event)" ondragleave="rdLeave(event)" ondrop="rdDrop(event)">
-            <div class="rd-icon">📄</div>
-            <div class="rd-title">Drop battery-report.html here</div>
-            <div class="rd-sub">or click to browse</div>
-            <button class="btn btn-secondary" onclick="event.stopPropagation();document.getElementById('report-file').click()">Browse File</button>
-          </div>
-        </div>
-      </div>
+      <!-- ── MAC section ── -->
+      <div id="bat-mac-section" style="display:none">
+        <div class="card-desc" style="margin-bottom:1.25rem">Run one Terminal command, paste the output below — the site extracts cycle count, health, capacity and condition instantly.</div>
 
-      <!-- Results -->
-      <div id="report-results" style="display:none">
-        <div class="section-label">Results</div>
-
-        <div class="result-grid">
-          <div class="result-box">
-            <div class="result-box-title">Battery Info</div>
-            <table class="info-table" id="res-info-table"></table>
-          </div>
-          <div class="result-box">
-            <div class="result-box-title">Capacity &amp; Health</div>
-            <table class="info-table" style="margin-bottom:.875rem" id="res-cap-table"></table>
-            <div class="health-label-row">
-              <span>Battery Health</span>
-              <span id="res-health-pct" style="font-weight:700">—</span>
+        <!-- Open System Information shortcut -->
+        <div class="mac-open-box">
+          <div>
+            <div class="mac-open-label">🖥️ <strong style="color:#e2e8f0">Open System Information → Power</strong> to view battery health visually</div>
+            <div class="mac-shortcut">
+              Hold <kbd>⌥ Option</kbd> + click <kbd>🍎 Apple menu</kbd> → <strong>System Information</strong> → click <strong>Power</strong> in the left sidebar
             </div>
-            <div class="health-bar">
-              <div class="health-fill" id="res-health-fill" style="width:0%"></div>
-            </div>
-            <p class="health-msg" id="res-health-msg"></p>
+            <div class="mac-shortcut" style="margin-top:.35rem">Or: <kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">System Information</code> → <kbd>Enter</kbd> → click <strong>Power</strong></div>
           </div>
         </div>
 
-        <button class="btn btn-secondary" onclick="resetReportUpload()">↺ Upload another report</button>
+        <div class="step-block">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Run this in Terminal</div>
+            <div class="step-hint">Open Terminal (<kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">terminal</code>) and run:</div>
+            <div class="cmd-box">
+              <code>system_profiler SPPowerDataType</code>
+              <button class="copy-btn" data-cmd="system_profiler SPPowerDataType" onclick="copyCmd(this)">Copy</button>
+            </div>
+            <div class="step-hint">Select all output (<kbd>⌘A</kbd>), copy (<kbd>⌘C</kbd>), then paste below.</div>
+          </div>
+        </div>
+
+        <div class="step-block">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Paste the output here</div>
+            <textarea class="mac-paste-area" id="mac-paste" placeholder="Paste Terminal output here…&#10;&#10;Example:&#10;  Cycle Count: 285&#10;  Maximum Capacity: 92%&#10;  Condition: Normal&#10;  Full Charge Capacity (mAh): 6842"></textarea>
+            <button class="btn btn-primary" onclick="parseMacBattery()">🔍 Analyse</button>
+            <button class="btn btn-secondary" style="margin-left:.5rem" onclick="resetMacAnalyser()">↺ Clear</button>
+          </div>
+        </div>
+
+        <!-- Mac results -->
+        <div id="mac-results" style="display:none">
+          <div class="section-label">Results</div>
+          <div class="result-grid">
+            <div class="result-box">
+              <div class="result-box-title">Battery Info</div>
+              <table class="info-table" id="mac-info-table"></table>
+            </div>
+            <div class="result-box">
+              <div class="result-box-title">Health</div>
+              <table class="info-table" style="margin-bottom:.875rem" id="mac-cap-table"></table>
+              <div class="health-label-row"><span>Battery Health</span><span id="mac-health-pct" style="font-weight:700">—</span></div>
+              <div class="health-bar"><div class="health-fill" id="mac-health-fill" style="width:0%"></div></div>
+              <p class="health-msg" id="mac-health-msg"></p>
+              <!-- Cycle count bar -->
+              <div id="mac-cycle-wrap" style="display:none;margin-top:.875rem">
+                <div class="health-label-row"><span>Cycle Count</span><span id="mac-cycle-label" style="font-weight:700">—</span></div>
+                <div class="health-bar"><div class="health-fill" id="mac-cycle-fill" style="width:0%"></div></div>
+                <p class="health-msg" id="mac-cycle-msg"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mac-parse-error" style="display:none;color:#fc8181;border-color:#9b2c2c;background:#2d1515" class="notice-box">
+          ⚠️ Could not find battery data in the pasted text. Make sure you pasted the full output of <code>system_profiler SPPowerDataType</code> or <code>ioreg -l | grep -e CurrentCapacity -e MaxCapacity -e CycleCount</code>.
+        </div>
       </div>
     </div>
 
     <!-- Extra commands -->
     <div class="card">
       <div class="card-title">💻 More Useful Commands</div>
-      <div class="card-desc">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#76e4f7">cmd</code> → right-click → Run as administrator.</div>
 
-      <div class="cmd-desc">Energy efficiency report (60-second scan, saves to Downloads):</div>
-      <div class="cmd-box">
-        <code>powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"</code>
-        <button class="copy-btn" data-cmd='powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"' onclick="copyCmd(this)">Copy</button>
+      <!-- OS tabs -->
+      <div class="bat-os-row">
+        <span style="font-size:.75rem;color:#718096">OS:</span>
+        <button class="bat-os-btn active" id="cmd-os-win" onclick="switchCmdOS('win')">⊞ Windows</button>
+        <button class="bat-os-btn"        id="cmd-os-mac" onclick="switchCmdOS('mac')">⌘ Mac</button>
       </div>
 
-      <div class="cmd-desc">Quick battery level check (%):</div>
-      <div class="cmd-box">
-        <code>wmic PATH Win32_Battery GET EstimatedChargeRemaining</code>
-        <button class="copy-btn" data-cmd="wmic PATH Win32_Battery GET EstimatedChargeRemaining" onclick="copyCmd(this)">Copy</button>
+      <!-- Windows commands -->
+      <div id="cmd-win-section">
+        <div class="card-desc" style="margin-bottom:1rem">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#76e4f7">cmd</code> → right-click → Run as administrator.</div>
+        <div class="cmd-desc">Energy efficiency report (60-second scan, saves to Downloads):</div>
+        <div class="cmd-box">
+          <code>powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"</code>
+          <button class="copy-btn" data-cmd='powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"' onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Quick battery level check (%):</div>
+        <div class="cmd-box">
+          <code>wmic PATH Win32_Battery GET EstimatedChargeRemaining</code>
+          <button class="copy-btn" data-cmd="wmic PATH Win32_Battery GET EstimatedChargeRemaining" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Design capacity in mWh (needs Admin):</div>
+        <div class="cmd-box">
+          <code>wmic /namespace:\\root\wmi PATH BatteryStaticData GET DesignedCapacity</code>
+          <button class="copy-btn" data-cmd="wmic /namespace:\\root\wmi PATH BatteryStaticData GET DesignedCapacity" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Full charge capacity in mWh (needs Admin):</div>
+        <div class="cmd-box">
+          <code>wmic /namespace:\\root\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity</code>
+          <button class="copy-btn" data-cmd="wmic /namespace:\\root\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity" onclick="copyCmd(this)">Copy</button>
+        </div>
       </div>
 
-      <div class="cmd-desc">Design capacity in mWh (needs Admin):</div>
-      <div class="cmd-box">
-        <code>wmic /namespace:\\root\wmi PATH BatteryStaticData GET DesignedCapacity</code>
-        <button class="copy-btn" data-cmd="wmic /namespace:\\root\wmi PATH BatteryStaticData GET DesignedCapacity" onclick="copyCmd(this)">Copy</button>
-      </div>
-
-      <div class="cmd-desc">Full charge capacity in mWh (needs Admin):</div>
-      <div class="cmd-box">
-        <code>wmic /namespace:\\root\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity</code>
-        <button class="copy-btn" data-cmd="wmic /namespace:\\root\wmi PATH BatteryFullChargedCapacity GET FullChargedCapacity" onclick="copyCmd(this)">Copy</button>
+      <!-- Mac commands -->
+      <div id="cmd-mac-section" style="display:none">
+        <div class="card-desc" style="margin-bottom:1rem">Run in Terminal — <kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">terminal</code> → <kbd>Enter</kbd>.</div>
+        <div class="cmd-desc">Full battery report — cycle count, health, condition, capacity:</div>
+        <div class="cmd-box">
+          <code>system_profiler SPPowerDataType</code>
+          <button class="copy-btn" data-cmd="system_profiler SPPowerDataType" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Quick cycle count + capacity (works on Intel &amp; Apple Silicon):</div>
+        <div class="cmd-box">
+          <code>ioreg -l | grep -e CurrentCapacity -e MaxCapacity -e CycleCount -e DesignCapacity</code>
+          <button class="copy-btn" data-cmd="ioreg -l | grep -e CurrentCapacity -e MaxCapacity -e CycleCount -e DesignCapacity" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Current battery level &amp; charging status:</div>
+        <div class="cmd-box">
+          <code>pmset -g batt</code>
+          <button class="copy-btn" data-cmd="pmset -g batt" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Open System Information directly to Power section:</div>
+        <div class="cmd-box">
+          <code>open /System/Applications/Utilities/System\ Information.app</code>
+          <button class="copy-btn" data-cmd="open /System/Applications/Utilities/System\ Information.app" onclick="copyCmd(this)">Copy</button>
+        </div>
+        <div class="cmd-desc">Raw Apple Smart Battery data (detailed, Intel Macs):</div>
+        <div class="cmd-box">
+          <code>ioreg -rn AppleSmartBattery | grep -E "Cycle|Capacity|Health|Condition|Temp"</code>
+          <button class="copy-btn" data-cmd="ioreg -rn AppleSmartBattery | grep -E 'Cycle|Capacity|Health|Condition|Temp'" onclick="copyCmd(this)">Copy</button>
+        </div>
       </div>
     </div>
 
@@ -1195,6 +1329,190 @@ function fallbackCopy(text, cb) {
   try { document.execCommand('copy'); if (cb) cb(); } catch(e) {}
   document.body.removeChild(ta);
 }
+
+/* ══════════════════════════════════════
+   BATTERY — macOS TAB SWITCHERS
+══════════════════════════════════════ */
+
+function switchBatOS(os) {
+  const isWin = os === 'win';
+  document.getElementById('bat-win-section').style.display = isWin ? 'block' : 'none';
+  document.getElementById('bat-mac-section').style.display = isWin ? 'none'  : 'block';
+  document.getElementById('bat-os-win').classList.toggle('active', isWin);
+  document.getElementById('bat-os-mac').classList.toggle('active', !isWin);
+}
+
+function switchCmdOS(os) {
+  const isWin = os === 'win';
+  document.getElementById('cmd-win-section').style.display = isWin ? 'block' : 'none';
+  document.getElementById('cmd-mac-section').style.display = isWin ? 'none'  : 'block';
+  document.getElementById('cmd-os-win').classList.toggle('active', isWin);
+  document.getElementById('cmd-os-mac').classList.toggle('active', !isWin);
+}
+
+/* ── macOS battery output parser ── */
+function parseMacBattery() {
+  const raw = (document.getElementById('mac-paste').value || '').trim();
+  if (!raw) { showMacError(true); return; }
+
+  let cycleCount = null, maxCapPct = null, fullCharge = null, designCap = null, condition = null;
+  let manufacturer = null, serialNo = null, voltage = null, amperage = null, temperature = null;
+
+  // ── system_profiler SPPowerDataType format ──────────────────────────────
+  // "Cycle Count: 285"
+  const cycleMatch  = raw.match(/cycle\s+count\s*[=:]\s*(\d+)/i);
+  // "Maximum Capacity: 92%" or "Maximum Capacity: 92"
+  const maxCapMatch = raw.match(/maximum\s+capacity\s*[=:]\s*["']?(\d+)\s*%?["']?/i);
+  // "Full Charge Capacity (mAh): 6842" or "Full Charge Capacity: 6842"
+  const fullChgMatch = raw.match(/full\s+charge\s+capacity(?:\s*\(mAh\))?\s*[=:]\s*["']?(\d+)/i);
+  // "Design Capacity (mAh): 7426" — system_profiler
+  const desCap1 = raw.match(/design\s+capacity(?:\s*\(mAh\))?\s*[=:]\s*["']?(\d+)/i);
+
+  // ── ioreg format ─────────────────────────────────────────────────────────
+  // "MaxCapacity" = 6842
+  const ioMax   = raw.match(/"MaxCapacity"\s*=\s*(\d+)/i);
+  // "DesignCapacity" = 7426
+  const ioDes   = raw.match(/"DesignCapacity"\s*=\s*(\d+)/i);
+  // "CycleCount" = 285
+  const ioCycle = raw.match(/"CycleCount"\s*=\s*(\d+)/i);
+  // "CurrentCapacity" = 5000
+  const ioCur   = raw.match(/"CurrentCapacity"\s*=\s*(\d+)/i);
+
+  // ── Condition ────────────────────────────────────────────────────────────
+  const condMatch = raw.match(/condition\s*[=:]\s*["']?([A-Za-z ]+)/i);
+  if (condMatch) condition = condMatch[1].trim().replace(/["']/g, '');
+
+  // ── Extra info ───────────────────────────────────────────────────────────
+  const mfrMatch  = raw.match(/manufacturer\s*[=:]\s*["']?([^\n"']+)/i);
+  const snMatch   = raw.match(/serial\s*(?:number)?\s*[=:]\s*["']?([^\n"']+)/i);
+  const voltMatch = raw.match(/voltage\s*[=:]\s*["']?(\d+)/i);
+  const ampMatch  = raw.match(/amperage\s*[=:]\s*["']?(-?\d+)/i);
+  const tempMatch = raw.match(/temperature\s*[=:]\s*["']?(\d+)/i);
+
+  if (mfrMatch)  manufacturer = mfrMatch[1].trim();
+  if (snMatch)   serialNo     = snMatch[1].trim();
+  if (voltMatch) voltage      = parseInt(voltMatch[1]);
+  if (ampMatch)  amperage     = parseInt(ampMatch[1]);
+  if (tempMatch) temperature  = parseInt(tempMatch[1]);
+
+  // ── Resolve values ───────────────────────────────────────────────────────
+  if (cycleMatch)  cycleCount = parseInt(cycleMatch[1]);
+  else if (ioCycle) cycleCount = parseInt(ioCycle[1]);
+
+  if (maxCapMatch) maxCapPct = parseInt(maxCapMatch[1]);
+
+  if (fullChgMatch) fullCharge = parseInt(fullChgMatch[1]);
+  else if (ioMax)   fullCharge = parseInt(ioMax[1]);
+
+  if (desCap1)   designCap = parseInt(desCap1[1]);
+  else if (ioDes) designCap = parseInt(ioDes[1]);
+
+  // Derive maxCapPct from ioreg if not given directly
+  if (!maxCapPct && fullCharge && designCap) {
+    maxCapPct = Math.round((fullCharge / designCap) * 100);
+  }
+
+  // Derive from condition if still missing
+  if (!maxCapPct && condition) {
+    const cLow = condition.toLowerCase();
+    if (cLow === 'normal')    maxCapPct = 85;
+    else if (cLow === 'fair') maxCapPct = 60;
+    else if (cLow === 'poor' || cLow === 'check battery') maxCapPct = 30;
+  }
+
+  // Nothing useful found
+  if (!cycleCount && !maxCapPct && !fullCharge) {
+    showMacError(true);
+    return;
+  }
+  showMacError(false);
+
+  // ── Build info table ─────────────────────────────────────────────────────
+  const infoRows = [];
+  if (manufacturer) infoRows.push(['Manufacturer', manufacturer]);
+  if (serialNo)     infoRows.push(['Serial Number', serialNo]);
+  if (cycleCount !== null) infoRows.push(['Cycle Count', cycleCount.toLocaleString()]);
+  if (condition)    infoRows.push(['Condition', conditionBadge(condition)]);
+  if (voltage)      infoRows.push(['Voltage', (voltage / 1000).toFixed(3) + ' V']);
+  if (amperage !== null) infoRows.push(['Amperage', amperage > 0 ? '+' + amperage + ' mA (charging)' : amperage + ' mA (discharging)']);
+  if (temperature)  infoRows.push(['Temperature', (temperature / 100).toFixed(1) + ' °C']);
+
+  const capRows = [];
+  if (fullCharge)   capRows.push(['Full Charge Capacity', fullCharge.toLocaleString() + ' mAh']);
+  if (designCap)    capRows.push(['Design Capacity', designCap.toLocaleString() + ' mAh']);
+  if (maxCapPct !== null) capRows.push(['Maximum Capacity', maxCapPct + '%']);
+
+  document.getElementById('mac-info-table').innerHTML = infoRows.map(([k,v]) =>
+    `<tr><td class="info-key">${k}</td><td class="info-val">${v}</td></tr>`).join('');
+  document.getElementById('mac-cap-table').innerHTML = capRows.map(([k,v]) =>
+    `<tr><td class="info-key">${k}</td><td class="info-val">${v}</td></tr>`).join('');
+
+  // ── Health bar ───────────────────────────────────────────────────────────
+  if (maxCapPct !== null) {
+    const pct  = Math.min(100, Math.max(0, maxCapPct));
+    const col  = pct >= 80 ? '#48bb78' : pct >= 60 ? '#ed8936' : '#f56565';
+    const msg  = pct >= 80 ? 'Battery is in good health.' :
+                 pct >= 60 ? 'Battery health is declining — consider a replacement soon.' :
+                             'Battery health is poor — replacement recommended.';
+    document.getElementById('mac-health-pct').textContent  = pct + '%';
+    document.getElementById('mac-health-fill').style.width = pct + '%';
+    document.getElementById('mac-health-fill').style.background = col;
+    document.getElementById('mac-health-msg').textContent  = msg;
+    document.getElementById('mac-health-msg').style.color  = col;
+  } else {
+    document.getElementById('mac-health-pct').textContent = '—';
+    document.getElementById('mac-health-msg').textContent = 'Health % not found in output.';
+  }
+
+  // ── Cycle count bar (max ~1000 cycles per Apple spec) ────────────────────
+  const cycleWrap = document.getElementById('mac-cycle-wrap');
+  if (cycleCount !== null) {
+    const maxCycles = 1000;
+    const cycPct   = Math.min(100, Math.round((cycleCount / maxCycles) * 100));
+    const cycCol   = cycPct <= 50 ? '#48bb78' : cycPct <= 80 ? '#ed8936' : '#f56565';
+    const cycMsg   = cycPct <= 50 ? 'Excellent — plenty of life remaining.' :
+                     cycPct <= 80 ? 'Moderate use — monitor health over next months.' :
+                                    'High cycle count — battery life may be noticeably reduced.';
+    document.getElementById('mac-cycle-label').textContent    = cycleCount.toLocaleString() + ' / ' + maxCycles;
+    document.getElementById('mac-cycle-fill').style.width     = cycPct + '%';
+    document.getElementById('mac-cycle-fill').style.background = cycCol;
+    document.getElementById('mac-cycle-msg').textContent      = cycMsg;
+    document.getElementById('mac-cycle-msg').style.color      = cycCol;
+    cycleWrap.style.display = 'block';
+  } else {
+    cycleWrap.style.display = 'none';
+  }
+
+  document.getElementById('mac-results').style.display = 'block';
+}
+
+function conditionBadge(cond) {
+  const c = cond.toLowerCase();
+  const col = c === 'normal' ? '#68d391' : c === 'fair' ? '#f6e05e' : '#fc8181';
+  return `<span style="color:${col};font-weight:600">${cond}</span>`;
+}
+
+function showMacError(show) {
+  document.getElementById('mac-parse-error').style.display = show ? 'block' : 'none';
+  if (show) document.getElementById('mac-results').style.display = 'none';
+}
+
+function resetMacAnalyser() {
+  document.getElementById('mac-paste').value              = '';
+  document.getElementById('mac-results').style.display   = 'none';
+  showMacError(false);
+  document.getElementById('mac-cycle-wrap').style.display = 'none';
+}
+
+/* ── Auto-detect macOS and switch battery tabs ── */
+(function detectAndSwitchOS() {
+  const isMac = /Mac/.test(navigator.platform) ||
+                (/AppleWebKit/.test(navigator.userAgent) && /Mac/.test(navigator.userAgent));
+  if (isMac) {
+    switchBatOS('mac');
+    switchCmdOS('mac');
+  }
+})();
 
 initBattery();
 </script>
