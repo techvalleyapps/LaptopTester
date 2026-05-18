@@ -1170,8 +1170,20 @@ function setChannel(ch) {
 ══════════════════════════════════════ */
 async function initBattery() {
   if (!('getBattery' in navigator)) {
-    document.getElementById('bat-pct').textContent      = 'N/A';
-    document.getElementById('bat-charging').textContent = 'Battery API not supported in this browser';
+    // Hide the battery icon + rows and show a clear unsupported notice
+    document.querySelector('.bat-overview').style.display = 'none';
+    const card = document.querySelector('#panel-battery .card');
+    card.insertAdjacentHTML('beforeend',
+      `<div class="notice-box" style="margin-top:0">
+        <strong>⚠️ Live battery data is not available in this browser.</strong><br>
+        Safari (and most browsers on macOS/iOS) have removed the Battery Status API for privacy reasons.<br>
+        <span style="color:#a0aec0">Use the <strong style="color:#e2e8f0">🩺 Battery Health — Report Analyser</strong> section below —
+        paste your Terminal output and get a full health breakdown instantly.</span>
+      </div>`
+    );
+    // Auto-switch the analyser and commands cards to Mac
+    switchBatOS('mac');
+    switchCmdOS('mac');
     return;
   }
   try {
@@ -1198,7 +1210,14 @@ async function initBattery() {
     ['chargingchange','levelchange','chargingtimechange','dischargingtimechange']
       .forEach(ev => bat.addEventListener(ev, upd));
   } catch(e) {
-    document.getElementById('bat-charging').textContent = 'Error: ' + e.message;
+    document.querySelector('.bat-overview').style.display = 'none';
+    const card = document.querySelector('#panel-battery .card');
+    card.insertAdjacentHTML('beforeend',
+      `<div class="notice-box" style="margin-top:0">
+        <strong>⚠️ Could not read battery data.</strong><br>
+        <span style="color:#a0aec0">${e.message || 'Battery API unavailable.'} Use the Terminal analyser below.</span>
+      </div>`
+    );
   }
 }
 function fmtBatTime(s) {
