@@ -222,6 +222,29 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
 .ch-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
 .ch-hint { font-size:.8125rem; color:#718096; margin-top:.25rem; }
 
+/* ─────────────────── MICROPHONE ─────────────────── */
+.mic-meter-wrap {
+  background:#0f1117; border:1px solid #2d3748; border-radius:.75rem;
+  padding:1.25rem 1.5rem; margin-bottom:1rem;
+}
+.mic-level-row { display:flex; align-items:center; gap:.875rem; margin-bottom:.75rem; }
+.mic-level-bar { flex:1; height:22px; background:#1a2033; border-radius:9999px; overflow:hidden; position:relative; }
+.mic-level-fill {
+  height:100%; width:0%; border-radius:9999px;
+  background:linear-gradient(90deg,#276749,#48bb78);
+  transition:width .05s linear;
+}
+.mic-level-pct { font-size:.8125rem; font-weight:700; color:#e2e8f0; min-width:3rem; text-align:right; }
+.mic-freq-row  { display:flex; align-items:flex-end; gap:3px; height:56px; margin-bottom:.875rem; }
+.mic-freq-bar  { flex:1; border-radius:3px 3px 0 0; background:#3182ce; min-width:0; transition:height .05s linear; }
+.mic-info-row  { display:flex; gap:1.5rem; flex-wrap:wrap; font-size:.8125rem; margin-top:.5rem; }
+.mic-info-item { color:#718096; }
+.mic-info-item span { color:#e2e8f0; font-weight:500; }
+.mic-status { font-size:.8125rem; margin-top:.5rem; min-height:1.2em; }
+.mic-status.active  { color:#68d391; }
+.mic-status.error   { color:#fc8181; }
+.mic-status.waiting { color:#718096; }
+
 /* ─────────────────── BATTERY ─────────────────── */
 .bat-overview { display:flex; align-items:center; gap:2rem; margin-bottom:1.25rem; flex-wrap:wrap; }
 .bat-icon-wrap { position:relative; width:130px; height:62px; flex-shrink:0; }
@@ -483,6 +506,41 @@ kbd {
         </div>
       </div>
       <p class="ch-hint" id="ch-hint">Playing through both speakers.</p>
+    </div>
+    <!-- Microphone test card -->
+    <div class="card">
+      <div class="card-title">🎙️ Microphone Test</div>
+      <div class="card-desc">Checks that your mic is picking up audio — shows live volume level and frequency activity.</div>
+
+      <div class="flex-row" style="margin-bottom:.75rem">
+        <button class="btn btn-primary" id="mic-start-btn" onclick="startMicTest()">▶ Start Mic Test</button>
+        <button class="btn btn-danger"  id="mic-stop-btn"  onclick="stopMicTest()" style="display:none">⏹ Stop</button>
+      </div>
+
+      <div class="mic-meter-wrap" id="mic-meter-wrap" style="display:none">
+        <!-- Volume bar -->
+        <div class="mic-level-row">
+          <span style="font-size:1.1rem">🎙️</span>
+          <div class="mic-level-bar">
+            <div class="mic-level-fill" id="mic-level-fill"></div>
+          </div>
+          <span class="mic-level-pct" id="mic-level-pct">0%</span>
+        </div>
+
+        <!-- Frequency bars (16 buckets) -->
+        <div class="mic-freq-row" id="mic-freq-row">
+          <!-- filled by JS -->
+        </div>
+
+        <!-- Device info -->
+        <div class="mic-info-row">
+          <div class="mic-info-item">Device: <span id="mic-device-name">—</span></div>
+          <div class="mic-info-item">Sample rate: <span id="mic-sample-rate">—</span></div>
+          <div class="mic-info-item">Peak: <span id="mic-peak">0%</span></div>
+        </div>
+      </div>
+
+      <div class="mic-status waiting" id="mic-status">Press Start to begin the microphone test.</div>
     </div>
   </div>
 
@@ -1163,6 +1221,136 @@ function setChannel(ch) {
     left:  '◀ Left speaker only — audio should come from your LEFT ear only.',
     right: 'Right speaker only — audio should come from your RIGHT ear only. ▶',
   }[ch];
+}
+
+/* ══════════════════════════════════════
+   MICROPHONE TEST
+══════════════════════════════════════ */
+
+let micStream   = null;
+let micCtx      = null;
+let micAnalyser = null;
+let micRafId    = null;
+let micPeak     = 0;
+const MIC_BARS  = 20;
+
+async function startMicTest() {
+  // Build freq bar elements once
+  const freqRow = document.getElementById('mic-freq-row');
+  if (!freqRow.children.length) {
+    for (let i = 0; i < MIC_BARS; i++) {
+      const b = document.createElement('div');
+      b.className = 'mic-freq-bar';
+      b.style.height = '2px';
+      freqRow.appendChild(b);
+    }
+  }
+
+  setMicStatus('waiting', '⏳ Requesting microphone permission…');
+  document.getElementById('mic-start-btn').style.display = 'none';
+
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  } catch(err) {
+    document.getElementById('mic-start-btn').style.display = 'inline-flex';
+    const msg = err.name === 'NotAllowedError'
+      ? '🚫 Microphone permission denied. Allow access in your browser settings and try again.'
+      : err.name === 'NotFoundError'
+      ? '🔇 No microphone found. Plug one in and try again.'
+      : '⚠️ Could not access microphone: ' + err.message;
+    setMicStatus('error', msg);
+    return;
+  }
+
+  // Web Audio setup: source → analyser
+  micCtx      = new (window.AudioContext || window.webkitAudioContext)();
+  micAnalyser = micCtx.createAnalyser();
+  micAnalyser.fftSize = 256;          // 128 frequency bins
+  micAnalyser.smoothingTimeConstant = 0.75;
+  const source = micCtx.createMediaStreamSource(micStream);
+  source.connect(micAnalyser);
+  // Note: deliberately NOT connecting to destination — no feedback loop
+
+  // Device name
+  const track = micStream.getAudioTracks()[0];
+  document.getElementById('mic-device-name').textContent  = track ? track.label || 'Default mic' : '—';
+  document.getElementById('mic-sample-rate').textContent  = micCtx.sampleRate.toLocaleString() + ' Hz';
+  micPeak = 0;
+  document.getElementById('mic-peak').textContent = '0%';
+
+  document.getElementById('mic-meter-wrap').style.display = 'block';
+  document.getElementById('mic-stop-btn').style.display   = 'inline-flex';
+  setMicStatus('active', '🟢 Microphone active — speak or make a sound to test.');
+
+  const dataArr  = new Uint8Array(micAnalyser.frequencyBinCount);
+  const freqBars = freqRow.querySelectorAll('.mic-freq-bar');
+  const binsPerBar = Math.floor(dataArr.length / MIC_BARS);
+
+  function tick() {
+    micRafId = requestAnimationFrame(tick);
+    micAnalyser.getByteFrequencyData(dataArr);
+
+    // RMS volume level
+    let sumSq = 0;
+    for (let i = 0; i < dataArr.length; i++) sumSq += (dataArr[i] / 255) ** 2;
+    const rms = Math.sqrt(sumSq / dataArr.length);
+    const pct = Math.min(100, Math.round(rms * 300)); // scale so normal speech ~50-80%
+
+    if (pct > micPeak) {
+      micPeak = pct;
+      document.getElementById('mic-peak').textContent = micPeak + '%';
+    }
+
+    // Level bar colour: green → amber → red
+    const fill = document.getElementById('mic-level-fill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct < 60
+      ? 'linear-gradient(90deg,#276749,#48bb78)'
+      : pct < 85
+      ? 'linear-gradient(90deg,#975a16,#f6ad55)'
+      : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+    document.getElementById('mic-level-pct').textContent = pct + '%';
+
+    // Frequency bars
+    freqBars.forEach((bar, i) => {
+      let sum = 0;
+      const start = i * binsPerBar;
+      for (let j = start; j < start + binsPerBar && j < dataArr.length; j++) sum += dataArr[j];
+      const avg = sum / binsPerBar;
+      const h   = Math.max(2, Math.round((avg / 255) * 56));
+      bar.style.height = h + 'px';
+      // Colour low→mid→high: blue → cyan → purple
+      const hue = Math.round(200 + (i / MIC_BARS) * 80);
+      bar.style.background = `hsl(${hue},70%,55%)`;
+    });
+  }
+  tick();
+}
+
+function stopMicTest() {
+  cancelAnimationFrame(micRafId); micRafId = null;
+  if (micStream)   { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  if (micCtx)      { micCtx.close(); micCtx = null; }
+  micAnalyser = null;
+
+  document.getElementById('mic-meter-wrap').style.display = 'none';
+  document.getElementById('mic-stop-btn').style.display   = 'none';
+  document.getElementById('mic-start-btn').style.display  = 'inline-flex';
+
+  const peak = micPeak;
+  micPeak = 0;
+  const msg = peak === 0
+    ? '⚠️ No audio detected. Check your microphone is not muted.'
+    : peak < 10
+    ? `⚠️ Very low signal (peak ${peak}%). Try speaking louder or adjusting input gain.`
+    : `✅ Microphone working — peak level was ${peak}%.`;
+  setMicStatus(peak > 10 ? 'active' : 'error', msg);
+}
+
+function setMicStatus(cls, msg) {
+  const el = document.getElementById('mic-status');
+  el.className = 'mic-status ' + cls;
+  el.textContent = msg;
 }
 
 /* ══════════════════════════════════════
