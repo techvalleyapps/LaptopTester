@@ -774,10 +774,37 @@ kbd {
 document.getElementById('tab-bar').addEventListener('click', e => {
   const btn = e.target.closest('.tab-btn');
   if (!btn) return;
+  const leaving = document.querySelector('.tab-btn.active')?.dataset.tab;
+  const arriving = btn.dataset.tab;
+  if (leaving === arriving) return;
+
+  // ── Stop camera when leaving camera tab ──
+  if (leaving === 'camera' && typeof stopCamera === 'function') stopCamera();
+
+  // ── Stop audio + mic when leaving sound tab ──
+  if (leaving === 'sound') {
+    const audio = document.getElementById('audio-player');
+    if (audio && !audio.paused) {
+      audio.pause();
+      audio.currentTime = 0;
+      const playBtn = document.getElementById('play-btn');
+      if (playBtn) {
+        playBtn.textContent = '▶ Play';
+        playBtn.classList.replace('btn-danger', 'btn-primary');
+      }
+      if (typeof stopSeekTicker === 'function') stopSeekTicker();
+      if (typeof updateSeekUI  === 'function') updateSeekUI(audio);
+    }
+    if (typeof stopMicTest === 'function' &&
+        document.getElementById('mic-stop-btn')?.style.display !== 'none') {
+      stopMicTest();
+    }
+  }
+
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p  => p.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  document.getElementById('panel-' + arriving).classList.add('active');
 });
 
 /* ══════════════════════════════════════
