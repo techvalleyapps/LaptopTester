@@ -244,6 +244,16 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
 .mic-status.active  { color:#68d391; }
 .mic-status.error   { color:#fc8181; }
 .mic-status.waiting { color:#718096; }
+.mic-device-row { display:flex; align-items:center; gap:.625rem; margin-bottom:.875rem; flex-wrap:wrap; }
+.mic-device-label { font-size:.8125rem; color:#718096; white-space:nowrap; }
+.mic-device-select {
+  flex:1; min-width:180px;
+  background:#0f1117; border:1px solid #4a5568; border-radius:.45rem;
+  color:#e2e8f0; font-size:.8125rem; padding:.4rem .75rem;
+  cursor:pointer; appearance:auto;
+}
+.mic-device-select:focus { outline:none; border-color:#3182ce; box-shadow:0 0 0 2px rgba(49,130,206,.35); }
+.mic-device-select option { background:#1a1f2e; }
 
 /* ─────────────────── BATTERY ─────────────────── */
 .bat-overview { display:flex; align-items:center; gap:2rem; margin-bottom:1.25rem; flex-wrap:wrap; }
@@ -511,6 +521,15 @@ kbd {
     <div class="card">
       <div class="card-title">🎙️ Microphone Test</div>
       <div class="card-desc">Checks that your mic is picking up audio — shows live volume level and frequency activity.</div>
+
+      <!-- Mic device selector -->
+      <div class="mic-device-row">
+        <span class="mic-device-label">🎙️ Mic:</span>
+        <select class="mic-device-select" id="mic-device-select" onchange="onMicDeviceChange()">
+          <option value="">Default microphone</option>
+        </select>
+        <button class="btn btn-secondary" onclick="enumerateMics()" title="Refresh device list" style="padding:.4rem .7rem;font-size:1rem">🔄</button>
+      </div>
 
       <div class="flex-row" style="margin-bottom:.75rem">
         <button class="btn btn-primary" id="mic-start-btn" onclick="startMicTest()">▶ Start Mic Test</button>
@@ -1261,6 +1280,37 @@ let micRafId    = null;
 let micPeak     = 0;
 const MIC_BARS  = 20;
 
+/* Populate the mic dropdown with all audioinput devices.
+   Labels are only available after getUserMedia permission is granted. */
+async function enumerateMics() {
+  const sel = document.getElementById('mic-device-select');
+  if (!sel || !navigator.mediaDevices?.enumerateDevices) return;
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    if (mics.length === 0) return; // leave default option
+    const prevVal = sel.value;
+    sel.innerHTML = '';
+    mics.forEach((mic, idx) => {
+      const opt = document.createElement('option');
+      opt.value = mic.deviceId;
+      // browsers expose 'default' and 'communications' virtual devices; label them nicely
+      opt.textContent = mic.label || `Microphone ${idx + 1}`;
+      sel.appendChild(opt);
+    });
+    // Restore previous selection if still present
+    if (prevVal && [...sel.options].some(o => o.value === prevVal)) sel.value = prevVal;
+  } catch(e) { /* silently ignore */ }
+}
+
+/* If mic is already running, switch to newly selected device automatically */
+async function onMicDeviceChange() {
+  if (micStream) {
+    stopMicTest();
+    await startMicTest();
+  }
+}
+
 async function startMicTest() {
   // Build freq bar elements once
   const freqRow = document.getElementById('mic-freq-row');
@@ -1276,8 +1326,13 @@ async function startMicTest() {
   setMicStatus('waiting', '⏳ Requesting microphone permission…');
   document.getElementById('mic-start-btn').style.display = 'none';
 
+  // Build audio constraints: use the selected device if one is chosen
+  const sel = document.getElementById('mic-device-select');
+  const deviceId = sel ? sel.value : '';
+  const audioConstraints = deviceId ? { deviceId: { exact: deviceId } } : true;
+
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints, video: false });
   } catch(err) {
     document.getElementById('mic-start-btn').style.display = 'inline-flex';
     const msg = err.name === 'NotAllowedError'
@@ -1289,6 +1344,16 @@ async function startMicTest() {
     return;
   }
 
+  // Permission granted — re-enumerate so labels become visible in the dropdown
+  await enumerateMics();
+  // Re-apply the device selection (enumerateMics may have reset it)
+  const track = micStream.getAudioTracks()[0];
+  if (sel && track) {
+    // Match the active track's device in the dropdown
+    const activeId = track.getSettings?.()?.deviceId || deviceId;
+    if (activeId && [...sel.options].some(o => o.value === activeId)) sel.value = activeId;
+  }
+
   // Web Audio setup: source → analyser
   micCtx      = new (window.AudioContext || window.webkitAudioContext)();
   micAnalyser = micCtx.createAnalyser();
@@ -1298,8 +1363,7 @@ async function startMicTest() {
   source.connect(micAnalyser);
   // Note: deliberately NOT connecting to destination — no feedback loop
 
-  // Device name
-  const track = micStream.getAudioTracks()[0];
+  // Device info
   document.getElementById('mic-device-name').textContent  = track ? track.label || 'Default mic' : '—';
   document.getElementById('mic-sample-rate').textContent  = micCtx.sampleRate.toLocaleString() + ' Hz';
   micPeak = 0;
@@ -1749,6 +1813,7 @@ function resetMacAnalyser() {
 })();
 
 initBattery();
+enumerateMics(); // pre-populate mic list if permission already granted
 </script>
 </body>
 </html>
