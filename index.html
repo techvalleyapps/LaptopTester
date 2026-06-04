@@ -838,6 +838,15 @@ const kbRowFn = [
   {c:'F9',l:'F9'},{c:'F10',l:'F10'},{c:'F11',l:'F11'},{c:'F12',l:'F12'},{c:'_g',l:'',w:'w-gap'},
   {c:'PrintScreen',l:'PrtSc'},{c:'ScrollLock',l:'ScrLk'},{c:'Pause',l:'Pause'},
 ];
+// ── Mac function row: Esc + F1–F19 (no PrtSc/ScrLk/Pause) ────────────
+const kbRowFnMac = [
+  {c:'Escape',l:'Esc',w:'w-escape'},{c:'_g',l:'',w:'w-gap'},
+  {c:'F1',l:'F1'},{c:'F2',l:'F2'},{c:'F3',l:'F3'},{c:'F4',l:'F4'},{c:'_g',l:'',w:'w-gap'},
+  {c:'F5',l:'F5'},{c:'F6',l:'F6'},{c:'F7',l:'F7'},{c:'F8',l:'F8'},{c:'_g',l:'',w:'w-gap'},
+  {c:'F9',l:'F9'},{c:'F10',l:'F10'},{c:'F11',l:'F11'},{c:'F12',l:'F12'},{c:'_g',l:'',w:'w-gap'},
+  {c:'F13',l:'F13'},{c:'F14',l:'F14'},{c:'F15',l:'F15'},{c:'F16',l:'F16'},
+  {c:'F17',l:'F17'},{c:'F18',l:'F18'},{c:'F19',l:'F19'},
+];
 const kbRowNum = [
   {c:'Backquote',l:'`~'},{c:'Digit1',l:'1!'},{c:'Digit2',l:'2@'},{c:'Digit3',l:'3#'},
   {c:'Digit4',l:'4$'},{c:'Digit5',l:'5%'},{c:'Digit6',l:'6^'},{c:'Digit7',l:'7&'},
@@ -882,7 +891,7 @@ const kbLayouts = {
     ],
   ],
   mac: [
-    kbRowFn, kbRowNum, kbRowTab, kbRowCaps, kbRowShift,
+    kbRowFnMac, kbRowNum, kbRowTab, kbRowCaps, kbRowShift,
     [
       // Mac: fn is OS-level; listed but won't register keydown events
       {c:'Fn',l:'fn',w:'w-ctrl'},{c:'ControlLeft',l:'⌃ ctrl',w:'w-ctrl'},
