@@ -9,29 +9,29 @@
 
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #0f1117;
-  color: #e2e8f0;
+  background: #f7fafc;
+  color: #1a202c;
   min-height: 100vh;
 }
 
 /* ── Header ── */
 .header {
-  background: #1a1f2e;
-  border-bottom: 1px solid #2d3748;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
   padding: 1rem 2rem;
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 .header-logo  { font-size: 1.75rem; }
-.header-title { font-size: 1.375rem; font-weight: 700; color: #63b3ed; }
+.header-title { font-size: 1.375rem; font-weight: 700; color: #2b6cb0; }
 .header-sub   { font-size: 0.8125rem; color: #718096; margin-top: 0.15rem; }
 
 /* ── Tabs ── */
 .tabs {
   display: flex;
-  background: #1a1f2e;
-  border-bottom: 1px solid #2d3748;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
   padding: 0 1.5rem;
   overflow-x: auto;
 }
@@ -50,8 +50,8 @@ body {
   align-items: center;
   gap: 0.4rem;
 }
-.tab-btn:hover  { color: #e2e8f0; }
-.tab-btn.active { color: #63b3ed; border-bottom-color: #63b3ed; }
+.tab-btn:hover  { color: #1a202c; }
+.tab-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; }
 
 /* ── Content ── */
 .content { max-width: 1200px; margin: 0 auto; padding: 1.75rem 1.5rem; }
@@ -60,13 +60,13 @@ body {
 
 /* ── Cards ── */
 .card {
-  background: #1a1f2e;
-  border: 1px solid #2d3748;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 }
-.card-title { font-size: 1.0625rem; font-weight: 600; color: #f7fafc; margin-bottom: 0.375rem; }
+.card-title { font-size: 1.0625rem; font-weight: 600; color: #1a202c; margin-bottom: 0.375rem; }
 .card-desc  { font-size: 0.8125rem; color: #718096; margin-bottom: 1.25rem; }
 
 /* ── Buttons ── */
@@ -85,9 +85,9 @@ body {
 .btn-success:hover   { background: #276749; }
 .btn-danger    { background: #c53030; color: #fff; }
 .btn-danger:hover    { background: #9b2c2c; }
-.btn-secondary { background: #2d3748; color: #e2e8f0; border: 1px solid #4a5568; }
-.btn-secondary:hover { background: #4a5568; }
-.btn-download  { background: #2d3748; color: #90cdf4; border: 1px solid #3182ce; }
+.btn-secondary { background: #e2e8f0; color: #1a202c; border: 1px solid #cbd5e0; }
+.btn-secondary:hover { background: #cbd5e0; }
+.btn-download  { background: #e2e8f0; color: #2b6cb0; border: 1px solid #3182ce; }
 .btn-download:hover  { background: #2b6cb0; color: #fff; }
 
 .flex-row { display: flex; gap: .625rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
@@ -95,14 +95,14 @@ body {
 /* ─────────────────── KEYBOARD ─────────────────── */
 .kb-stats { display: flex; gap: .625rem; flex-wrap: wrap; margin-bottom: .875rem; }
 .badge { padding: .25rem .8rem; border-radius: 9999px; font-size: .75rem; font-weight: 600; }
-.badge-blue  { background: #1a365d; color: #90cdf4; }
-.badge-green { background: #1c4532; color: #68d391; }
-.badge-gray  { background: #2d3748; color: #a0aec0; border: 1px solid #4a5568; }
+.badge-blue  { background: #ebf8ff; color: #2b6cb0; }
+.badge-green { background: #f0fff4; color: #2f855a; }
+.badge-gray  { background: #e2e8f0; color: #4a5568; border: 1px solid #cbd5e0; }
 
 .last-key {
   padding: .625rem .875rem;
-  background: #0f1117;
-  border: 1px solid #2d3748;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: .5rem;
   font-size: .8125rem; color: #718096;
   margin-bottom: 1rem; min-height: 38px;
@@ -113,17 +113,17 @@ body {
 
 .key {
   height: 40px; min-width: 40px;
-  border-radius: 5px; border: 1px solid #4a5568;
-  background: #2d3748;
+  border-radius: 5px; border: 1px solid #cbd5e0;
+  background: #e2e8f0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  font-size: .625rem; line-height: 1.2; color: #a0aec0;
+  font-size: .625rem; line-height: 1.2; color: #4a5568;
   user-select: none; padding: 2px 4px; text-align: center;
   transition: background .08s, border-color .08s, transform .06s;
 }
-.key.pressed { background:#2b6cb0; border-color:#63b3ed; color:#fff; transform:scale(.93); }
-.key.tested  { background:#1c4532; border-color:#48bb78; color:#68d391; }
-.key.pressed.tested { background:#2b6cb0; border-color:#63b3ed; color:#fff; }
+.key.pressed { background:#2b6cb0; border-color:#2b6cb0; color:#fff; transform:scale(.93); }
+.key.tested  { background:#f0fff4; border-color:#48bb78; color:#2f855a; }
+.key.pressed.tested { background:#2b6cb0; border-color:#2b6cb0; color:#fff; }
 
 .w-escape   { min-width:52px; }  .w-backspace{ min-width:82px; }
 .w-tab      { min-width:68px; }  .w-backslash{ min-width:58px; }
@@ -137,11 +137,11 @@ body {
 
 /* ── Layout toggle ── */
 .layout-btn {
-  padding:.28rem .65rem; border:1px solid #4a5568; border-radius:.375rem;
-  background:#2d3748; color:#a0aec0; cursor:pointer; font-size:.75rem; font-weight:500;
+  padding:.28rem .65rem; border:1px solid #cbd5e0; border-radius:.375rem;
+  background:#e2e8f0; color:#4a5568; cursor:pointer; font-size:.75rem; font-weight:500;
   transition:all .15s;
 }
-.layout-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
+.layout-btn.active { background:#ebf8ff; border-color:#3182ce; color:#2b6cb0; }
 
 /* ── Keyboard + Numpad side-by-side ── */
 .kb-wrap { display:inline-flex; gap:20px; align-items:flex-start; }
@@ -163,25 +163,25 @@ body {
 @media(max-width:640px){.camera-grid{grid-template-columns:1fr;}}
 
 .cam-preview {
-  background:#0f1117; border:1px solid #2d3748;
+  background:#f7fafc; border:1px solid #e2e8f0;
   border-radius:.625rem; overflow:hidden;
   aspect-ratio:16/9; display:flex; align-items:center; justify-content:center;
 }
 .cam-preview video { width:100%; height:100%; object-fit:cover; display:none; }
-.cam-placeholder   { text-align:center; color:#4a5568; padding:1rem; }
+.cam-placeholder   { text-align:center; color:#a0aec0; padding:1rem; }
 .cam-placeholder svg { width:52px; height:52px; margin-bottom:.5rem; }
 
 .info-table { width:100%; border-collapse:collapse; }
-.info-table tr { border-bottom:1px solid #2d3748; }
+.info-table tr { border-bottom:1px solid #e2e8f0; }
 .info-table tr:last-child { border-bottom:none; }
 .info-table td { padding:.5rem 0; font-size:.8125rem; }
 .info-table td:first-child { color:#718096; width:40%; }
-.info-table td:last-child  { color:#f7fafc; font-weight:500; word-break:break-all; }
+.info-table td:last-child  { color:#1a202c; font-weight:500; word-break:break-all; }
 
 /* ─────────────────── SOUND ─────────────────── */
 .audio-wrap {
-  background: #0f1117;
-  border: 1px solid #2d3748;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: .75rem;
   padding: 1.25rem 1.5rem;
   margin-bottom: 1rem;
@@ -193,7 +193,7 @@ body {
 }
 .music-info { display:flex; align-items:center; gap:1rem; }
 .music-icon { font-size:2.25rem; line-height:1; }
-.music-title{ font-size:1rem; font-weight:600; color:#e2e8f0; margin-bottom:.2rem; }
+.music-title{ font-size:1rem; font-weight:600; color:#1a202c; margin-bottom:.2rem; }
 .music-sub  { font-size:.75rem; color:#718096; }
 
 /* Controls bar below the player */
@@ -214,98 +214,98 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
 .channel-row { display:flex; gap:.5rem; }
 .ch-btn {
   padding:.5rem 1rem;
-  border:1px solid #2d3748; border-radius:.45rem;
-  background:#0f1117; color:#718096;
+  border:1px solid #e2e8f0; border-radius:.45rem;
+  background:#f7fafc; color:#718096;
   cursor:pointer; font-size:.8125rem; font-weight:500;
   transition:all .15s; white-space:nowrap;
 }
-.ch-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
+.ch-btn.active { background:#ebf8ff; border-color:#3182ce; color:#2b6cb0; }
 .ch-hint { font-size:.8125rem; color:#718096; margin-top:.25rem; }
 
 /* ─────────────────── MICROPHONE ─────────────────── */
 .mic-meter-wrap {
-  background:#0f1117; border:1px solid #2d3748; border-radius:.75rem;
+  background:#f7fafc; border:1px solid #e2e8f0; border-radius:.75rem;
   padding:1.25rem 1.5rem; margin-bottom:1rem;
 }
 .mic-level-row { display:flex; align-items:center; gap:.875rem; margin-bottom:.75rem; }
-.mic-level-bar { flex:1; height:22px; background:#1a2033; border-radius:9999px; overflow:hidden; position:relative; }
+.mic-level-bar { flex:1; height:22px; background:#e2e8f0; border-radius:9999px; overflow:hidden; position:relative; }
 .mic-level-fill {
   height:100%; width:0%; border-radius:9999px;
   background:linear-gradient(90deg,#276749,#48bb78);
   transition:width .05s linear;
 }
-.mic-level-pct { font-size:.8125rem; font-weight:700; color:#e2e8f0; min-width:3rem; text-align:right; }
+.mic-level-pct { font-size:.8125rem; font-weight:700; color:#1a202c; min-width:3rem; text-align:right; }
 .mic-freq-row  { display:flex; align-items:flex-end; gap:3px; height:56px; margin-bottom:.875rem; }
 .mic-freq-bar  { flex:1; border-radius:3px 3px 0 0; background:#3182ce; min-width:0; transition:height .05s linear; }
 .mic-info-row  { display:flex; gap:1.5rem; flex-wrap:wrap; font-size:.8125rem; margin-top:.5rem; }
 .mic-info-item { color:#718096; }
-.mic-info-item span { color:#e2e8f0; font-weight:500; }
+.mic-info-item span { color:#1a202c; font-weight:500; }
 .mic-status { font-size:.8125rem; margin-top:.5rem; min-height:1.2em; }
-.mic-status.active  { color:#68d391; }
-.mic-status.error   { color:#fc8181; }
+.mic-status.active  { color:#2f855a; }
+.mic-status.error   { color:#c53030; }
 .mic-status.waiting { color:#718096; }
 .mic-device-row { display:flex; align-items:center; gap:.625rem; margin-bottom:.875rem; flex-wrap:wrap; }
 .mic-device-label { font-size:.8125rem; color:#718096; white-space:nowrap; }
 .mic-device-select {
   flex:1; min-width:180px;
-  background:#0f1117; border:1px solid #4a5568; border-radius:.45rem;
-  color:#e2e8f0; font-size:.8125rem; padding:.4rem .75rem;
+  background:#f7fafc; border:1px solid #cbd5e0; border-radius:.45rem;
+  color:#1a202c; font-size:.8125rem; padding:.4rem .75rem;
   cursor:pointer; appearance:auto;
 }
 .mic-device-select:focus { outline:none; border-color:#3182ce; box-shadow:0 0 0 2px rgba(49,130,206,.35); }
-.mic-device-select option { background:#1a1f2e; }
+.mic-device-select option { background:#ffffff; }
 
 /* ─────────────────── BATTERY ─────────────────── */
 .bat-overview { display:flex; align-items:center; gap:2rem; margin-bottom:1.25rem; flex-wrap:wrap; }
 .bat-icon-wrap { position:relative; width:130px; height:62px; flex-shrink:0; }
-.bat-body { width:118px; height:62px; border:3px solid #4a5568; border-radius:7px; overflow:hidden; position:relative; }
-.bat-nub  { position:absolute; right:-10px; top:50%; transform:translateY(-50%); width:9px; height:22px; background:#4a5568; border-radius:0 4px 4px 0; }
+.bat-body { width:118px; height:62px; border:3px solid #cbd5e0; border-radius:7px; overflow:hidden; position:relative; }
+.bat-nub  { position:absolute; right:-10px; top:50%; transform:translateY(-50%); width:9px; height:22px; background:#cbd5e0; border-radius:0 4px 4px 0; }
 .bat-fill { height:100%; background:linear-gradient(90deg,#276749,#48bb78); transition:width .6s; }
 .bat-pct  { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.125rem; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.7); }
 .bat-meta { display:flex; flex-direction:column; gap:.45rem; }
 .bat-row  { display:flex; gap:.75rem; font-size:.8125rem; }
 .bat-lbl  { color:#718096; width:140px; }
-.bat-val  { color:#f7fafc; font-weight:500; }
+.bat-val  { color:#1a202c; font-weight:500; }
 
 /* health bar */
 .health-label-row { display:flex; justify-content:space-between; font-size:.8125rem; color:#718096; margin-bottom:.4rem; }
-.health-bar  { height:10px; background:#2d3748; border-radius:9999px; overflow:hidden; margin-bottom:.5rem; }
+.health-bar  { height:10px; background:#e2e8f0; border-radius:9999px; overflow:hidden; margin-bottom:.5rem; }
 .health-fill { height:100%; border-radius:9999px; transition:width .6s; }
 .hf-good { background:linear-gradient(90deg,#276749,#48bb78); }
-.hf-warn { background:linear-gradient(90deg,#975a16,#f6ad55); }
-.hf-poor { background:linear-gradient(90deg,#9b2c2c,#fc8181); }
+.hf-warn { background:linear-gradient(90deg,#975a16,#c05621); }
+.hf-poor { background:linear-gradient(90deg,#9b2c2c,#c53030); }
 .health-msg { font-size:.8125rem; margin-top:.25rem; }
 
 /* notice box */
 .notice-box {
-  background: #1a2744; border: 1px solid #2b4a8a;
+  background: #ebf8ff; border: 1px solid #90cdf4;
   border-radius: .625rem; padding: 1rem 1.125rem;
-  font-size: .8125rem; color: #90cdf4; margin-bottom: 1.25rem;
+  font-size: .8125rem; color: #2b6cb0; margin-bottom: 1.25rem;
 }
-.notice-box strong { color: #e2e8f0; }
+.notice-box strong { color: #1a202c; }
 
 .cmd-box {
-  background: #0d1117; border: 1px solid #2d3748; border-radius: .5rem;
+  background: #edf2f7; border: 1px solid #e2e8f0; border-radius: .5rem;
   padding: .75rem 1rem; display: flex; justify-content: space-between;
   align-items: center; gap: .75rem; margin-bottom: .75rem;
 }
-.cmd-box code { font-family:'Consolas','Courier New',monospace; font-size:.8125rem; color:#76e4f7; word-break:break-all; }
+.cmd-box code { font-family:'Consolas','Courier New',monospace; font-size:.8125rem; color:#0987a0; word-break:break-all; }
 .cmd-desc { font-size:.75rem; color:#718096; margin-bottom:.4rem; }
 .copy-btn {
   flex-shrink:0; padding:.25rem .6rem;
-  background:#2d3748; border:1px solid #4a5568; border-radius:.375rem;
-  color:#a0aec0; font-size:.75rem; cursor:pointer; transition:background .15s;
+  background:#e2e8f0; border:1px solid #cbd5e0; border-radius:.375rem;
+  color:#4a5568; font-size:.75rem; cursor:pointer; transition:background .15s;
 }
-.copy-btn:hover { background:#4a5568; color:#f7fafc; }
+.copy-btn:hover { background:#cbd5e0; color:#1a202c; }
 
 /* ── Utility ── */
-.text-green  { color:#68d391; } .text-yellow { color:#f6ad55; }
-.text-red    { color:#fc8181; } .text-muted  { color:#718096; font-size:.8125rem; }
+.text-green  { color:#2f855a; } .text-yellow { color:#c05621; }
+.text-red    { color:#c53030; } .text-muted  { color:#718096; font-size:.8125rem; }
 .form-group  { display:flex; flex-direction:column; gap:.3rem; }
 .form-group label { font-size:.75rem; color:#718096; }
 .form-input, .form-select {
-  padding:.45rem .75rem; background:#1a1f2e; border:1px solid #2d3748;
-  border-radius:.45rem; color:#e2e8f0; font-size:.8125rem;
+  padding:.45rem .75rem; background:#ffffff; border:1px solid #e2e8f0;
+  border-radius:.45rem; color:#1a202c; font-size:.8125rem;
 }
 .form-input:focus, .form-select:focus { outline:none; border-color:#3182ce; }
 .mt-sm { margin-top:.5rem; }  .mt-md { margin-top:1rem; }
@@ -313,33 +313,33 @@ input[type="range"] { flex:1; accent-color:#3182ce; cursor:pointer; min-width:12
 /* ── OS tabs (battery) ── */
 .bat-os-row { display:flex; gap:.5rem; margin-bottom:1.25rem; align-items:center; }
 .bat-os-btn {
-  padding:.28rem .75rem; border:1px solid #4a5568; border-radius:.375rem;
-  background:#2d3748; color:#a0aec0; cursor:pointer;
+  padding:.28rem .75rem; border:1px solid #cbd5e0; border-radius:.375rem;
+  background:#e2e8f0; color:#4a5568; cursor:pointer;
   font-size:.75rem; font-weight:500; transition:background .15s;
 }
-.bat-os-btn.active { background:#1a365d; border-color:#3182ce; color:#90cdf4; }
+.bat-os-btn.active { background:#ebf8ff; border-color:#3182ce; color:#2b6cb0; }
 
 /* Mac paste area */
 .mac-paste-area {
-  width:100%; min-height:130px; background:#0d1117;
-  border:1px solid #2d3748; border-radius:.5rem;
-  color:#76e4f7; font-family:'Consolas','Courier New',monospace;
+  width:100%; min-height:130px; background:#edf2f7;
+  border:1px solid #e2e8f0; border-radius:.5rem;
+  color:#0987a0; font-family:'Consolas','Courier New',monospace;
   font-size:.75rem; padding:.75rem; resize:vertical;
   margin-bottom:.75rem; box-sizing:border-box;
 }
 .mac-paste-area:focus { outline:none; border-color:#3182ce; }
 .mac-open-box {
-  background:#0d1117; border:1px solid #2d3748; border-radius:.5rem;
+  background:#edf2f7; border:1px solid #e2e8f0; border-radius:.5rem;
   padding:.875rem 1rem; margin-bottom:1rem;
   display:flex; align-items:center; justify-content:space-between;
   gap:.75rem; flex-wrap:wrap;
 }
-.mac-open-label { font-size:.8125rem; color:#a0aec0; }
+.mac-open-label { font-size:.8125rem; color:#4a5568; }
 .mac-shortcut { display:flex; gap:.375rem; flex-wrap:wrap; align-items:center; margin-top:.3rem; font-size:.8125rem; color:#718096; }
 kbd {
-  display:inline-block; padding:.1rem .45rem; background:#2d3748;
-  border:1px solid #4a5568; border-radius:.3rem;
-  font-family:'Consolas','Courier New',monospace; font-size:.7rem; color:#e2e8f0;
+  display:inline-block; padding:.1rem .45rem; background:#e2e8f0;
+  border:1px solid #cbd5e0; border-radius:.3rem;
+  font-family:'Consolas','Courier New',monospace; font-size:.7rem; color:#1a202c;
 }
 
 /* ── Steps ── */
@@ -351,23 +351,23 @@ kbd {
   font-size:.8125rem; font-weight:700; margin-top:.125rem;
 }
 .step-body  { flex:1; }
-.step-title { font-size:.9375rem; font-weight:600; color:#f7fafc; margin-bottom:.5rem; }
+.step-title { font-size:.9375rem; font-weight:600; color:#1a202c; margin-bottom:.5rem; }
 .step-hint  { font-size:.8125rem; color:#718096; margin-bottom:.625rem; }
 
 /* ── Report upload drop zone ── */
 .report-drop {
-  border: 2px dashed #4a5568;
+  border: 2px dashed #cbd5e0;
   border-radius: .75rem;
   padding: 1.75rem 1rem;
   text-align: center;
   cursor: pointer;
   transition: border-color .2s, background .2s;
-  background: #0f1117;
+  background: #f7fafc;
   margin-top: .5rem;
 }
-.report-drop:hover, .report-drop.drag-over { border-color:#3182ce; background:#0d1d33; }
+.report-drop:hover, .report-drop.drag-over { border-color:#3182ce; background:#ebf8ff; }
 .report-drop .rd-icon  { font-size:2rem; margin-bottom:.375rem; }
-.report-drop .rd-title { font-size:.875rem; font-weight:600; color:#e2e8f0; margin-bottom:.25rem; }
+.report-drop .rd-title { font-size:.875rem; font-weight:600; color:#1a202c; margin-bottom:.25rem; }
 .report-drop .rd-sub   { font-size:.75rem; color:#718096; margin-bottom:.875rem; }
 
 /* ── Report results ── */
@@ -379,8 +379,8 @@ kbd {
 }
 @media(max-width:500px){ .result-grid{ grid-template-columns:1fr; } }
 .result-box {
-  background: #0f1117;
-  border: 1px solid #2d3748;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: .625rem;
   padding: 1rem;
 }
@@ -604,7 +604,7 @@ kbd {
           <div class="step-num">1</div>
           <div class="step-body">
             <div class="step-title">Generate the battery report</div>
-            <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#76e4f7">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
+            <div class="step-hint">Open <strong>Command Prompt (CMD)</strong> as Administrator — press <strong>Win + R</strong>, type <code style="color:#0987a0">cmd</code>, then right-click → <em>Run as administrator</em>. Then run:</div>
             <div class="cmd-box">
               <code>powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"</code>
               <button class="copy-btn" data-cmd='powercfg /batteryreport /output "%USERPROFILE%\Downloads\battery-report.html"' onclick="copyCmd(this)">Copy</button>
@@ -653,11 +653,11 @@ kbd {
         <!-- Open System Information shortcut -->
         <div class="mac-open-box">
           <div>
-            <div class="mac-open-label">🖥️ <strong style="color:#e2e8f0">Open System Information → Power</strong> to view battery health visually</div>
+            <div class="mac-open-label">🖥️ <strong style="color:#1a202c">Open System Information → Power</strong> to view battery health visually</div>
             <div class="mac-shortcut">
               Hold <kbd>⌥ Option</kbd> + click <kbd>🍎 Apple menu</kbd> → <strong>System Information</strong> → click <strong>Power</strong> in the left sidebar
             </div>
-            <div class="mac-shortcut" style="margin-top:.35rem">Or: <kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">System Information</code> → <kbd>Enter</kbd> → click <strong>Power</strong></div>
+            <div class="mac-shortcut" style="margin-top:.35rem">Or: <kbd>⌘ Space</kbd> → type <code style="color:#0987a0">System Information</code> → <kbd>Enter</kbd> → click <strong>Power</strong></div>
           </div>
         </div>
 
@@ -665,7 +665,7 @@ kbd {
           <div class="step-num">1</div>
           <div class="step-body">
             <div class="step-title">Run this in Terminal</div>
-            <div class="step-hint">Open Terminal (<kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">terminal</code>) and run:</div>
+            <div class="step-hint">Open Terminal (<kbd>⌘ Space</kbd> → type <code style="color:#0987a0">terminal</code>) and run:</div>
             <div class="cmd-box">
               <code>system_profiler SPPowerDataType</code>
               <button class="copy-btn" data-cmd="system_profiler SPPowerDataType" onclick="copyCmd(this)">Copy</button>
@@ -708,7 +708,7 @@ kbd {
           </div>
         </div>
 
-        <div id="mac-parse-error" style="display:none;color:#fc8181;border-color:#9b2c2c;background:#2d1515" class="notice-box">
+        <div id="mac-parse-error" style="display:none;color:#c53030;border-color:#9b2c2c;background:#fff5f5" class="notice-box">
           ⚠️ Could not find battery data in the pasted text. Make sure you pasted the full output of <code>system_profiler SPPowerDataType</code> or <code>ioreg -l | grep -e CurrentCapacity -e MaxCapacity -e CycleCount</code>.
         </div>
       </div>
@@ -727,7 +727,7 @@ kbd {
 
       <!-- Windows commands -->
       <div id="cmd-win-section">
-        <div class="card-desc" style="margin-bottom:1rem">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#76e4f7">cmd</code> → right-click → Run as administrator.</div>
+        <div class="card-desc" style="margin-bottom:1rem">Run in Command Prompt (CMD) as Administrator — Win + R → <code style="color:#0987a0">cmd</code> → right-click → Run as administrator.</div>
         <div class="cmd-desc">Energy efficiency report (60-second scan, saves to Downloads):</div>
         <div class="cmd-box">
           <code>powercfg /energy /output "%USERPROFILE%\Downloads\energy-report.html"</code>
@@ -752,7 +752,7 @@ kbd {
 
       <!-- Mac commands -->
       <div id="cmd-mac-section" style="display:none">
-        <div class="card-desc" style="margin-bottom:1rem">Run in Terminal — <kbd>⌘ Space</kbd> → type <code style="color:#76e4f7">terminal</code> → <kbd>Enter</kbd>.</div>
+        <div class="card-desc" style="margin-bottom:1rem">Run in Terminal — <kbd>⌘ Space</kbd> → type <code style="color:#0987a0">terminal</code> → <kbd>Enter</kbd>.</div>
         <div class="cmd-desc">Full battery report — cycle count, health, condition, capacity:</div>
         <div class="cmd-box">
           <code>system_profiler SPPowerDataType</code>
@@ -1004,7 +1004,7 @@ document.addEventListener('keydown', e => {
   if (el) { el.classList.add('pressed', 'tested'); testedKeys.add(e.code); updateKbStats(); }
   const name = e.key === ' ' ? 'Space' : e.key;
   document.getElementById('last-key').innerHTML =
-    `Key: <strong style="color:#90cdf4">${esc(name)}</strong> &nbsp;·&nbsp; Code: <code style="color:#68d391">${e.code}</code> &nbsp;·&nbsp; KeyCode: <code>${e.keyCode}</code>`;
+    `Key: <strong style="color:#2b6cb0">${esc(name)}</strong> &nbsp;·&nbsp; Code: <code style="color:#2f855a">${e.code}</code> &nbsp;·&nbsp; KeyCode: <code>${e.keyCode}</code>`;
 });
 document.addEventListener('keyup', e => {
   const el = document.getElementById('key-' + e.code);
@@ -1407,8 +1407,8 @@ async function startMicTest() {
     fill.style.background = pct < 60
       ? 'linear-gradient(90deg,#276749,#48bb78)'
       : pct < 85
-      ? 'linear-gradient(90deg,#975a16,#f6ad55)'
-      : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+      ? 'linear-gradient(90deg,#975a16,#c05621)'
+      : 'linear-gradient(90deg,#9b2c2c,#c53030)';
     document.getElementById('mic-level-pct').textContent = pct + '%';
 
     // Frequency bars
@@ -1465,7 +1465,7 @@ async function initBattery() {
       `<div class="notice-box" style="margin-top:0">
         <strong>⚠️ Live battery data is not available in this browser.</strong><br>
         Safari (and most browsers on macOS/iOS) have removed the Battery Status API for privacy reasons.<br>
-        <span style="color:#a0aec0">Use the <strong style="color:#e2e8f0">🩺 Battery Health — Report Analyser</strong> section below —
+        <span style="color:#4a5568">Use the <strong style="color:#1a202c">🩺 Battery Health — Report Analyser</strong> section below —
         paste your Terminal output and get a full health breakdown instantly.</span>
       </div>`
     );
@@ -1482,8 +1482,8 @@ async function initBattery() {
       fill.style.width = lvl + '%';
       fill.style.background = lvl > 50
         ? 'linear-gradient(90deg,#276749,#48bb78)'
-        : lvl > 20 ? 'linear-gradient(90deg,#975a16,#f6ad55)'
-                   : 'linear-gradient(90deg,#9b2c2c,#fc8181)';
+        : lvl > 20 ? 'linear-gradient(90deg,#975a16,#c05621)'
+                   : 'linear-gradient(90deg,#9b2c2c,#c53030)';
       document.getElementById('bat-pct').textContent     = lvl + '%';
       document.getElementById('bat-charging').innerHTML  = bat.charging
         ? '<span class="text-green">⚡ Charging</span>' : '🔋 Discharging';
@@ -1503,7 +1503,7 @@ async function initBattery() {
     card.insertAdjacentHTML('beforeend',
       `<div class="notice-box" style="margin-top:0">
         <strong>⚠️ Could not read battery data.</strong><br>
-        <span style="color:#a0aec0">${e.message || 'Battery API unavailable.'} Use the Terminal analyser below.</span>
+        <span style="color:#4a5568">${e.message || 'Battery API unavailable.'} Use the Terminal analyser below.</span>
       </div>`
     );
   }
@@ -1589,7 +1589,7 @@ function parseAndDisplay(html) {
   if (d.designCap && d.fullCap && d.designCap > 0) {
     const pct      = Math.min(100, Math.round((d.fullCap / d.designCap) * 100));
     const fillCls  = pct >= 80 ? 'hf-good' : pct >= 60 ? 'hf-warn' : 'hf-poor';
-    const color    = pct >= 80 ? '#68d391' : pct >= 60 ? '#f6ad55' : '#fc8181';
+    const color    = pct >= 80 ? '#2f855a' : pct >= 60 ? '#c05621' : '#c53030';
     const msg      = pct >= 80 ? '✅ Good — battery is healthy'
                    : pct >= 60 ? '⚠️ Fair — consider replacing soon'
                    :             '❌ Poor — replacement recommended';
@@ -1603,7 +1603,7 @@ function parseAndDisplay(html) {
     document.getElementById('res-health-pct').textContent = 'N/A';
     document.getElementById('res-health-msg').textContent =
       'Could not find capacity values in this file. Make sure you uploaded the correct battery-report.html.';
-    document.getElementById('res-health-msg').style.color = '#f6ad55';
+    document.getElementById('res-health-msg').style.color = '#c05621';
   }
 
   // Show results, hide drop zone
@@ -1757,7 +1757,7 @@ function parseMacBattery() {
   // ── Health bar ───────────────────────────────────────────────────────────
   if (maxCapPct !== null) {
     const pct  = Math.min(100, Math.max(0, maxCapPct));
-    const col  = pct >= 80 ? '#48bb78' : pct >= 60 ? '#ed8936' : '#f56565';
+    const col  = pct >= 80 ? '#2f855a' : pct >= 60 ? '#c05621' : '#c53030';
     const msg  = pct >= 80 ? 'Battery is in good health.' :
                  pct >= 60 ? 'Battery health is declining — consider a replacement soon.' :
                              'Battery health is poor — replacement recommended.';
@@ -1776,7 +1776,7 @@ function parseMacBattery() {
   if (cycleCount !== null) {
     const maxCycles = 1000;
     const cycPct   = Math.min(100, Math.round((cycleCount / maxCycles) * 100));
-    const cycCol   = cycPct <= 50 ? '#48bb78' : cycPct <= 80 ? '#ed8936' : '#f56565';
+    const cycCol   = cycPct <= 50 ? '#2f855a' : cycPct <= 80 ? '#c05621' : '#c53030';
     const cycMsg   = cycPct <= 50 ? 'Excellent — plenty of life remaining.' :
                      cycPct <= 80 ? 'Moderate use — monitor health over next months.' :
                                     'High cycle count — battery life may be noticeably reduced.';
@@ -1795,7 +1795,7 @@ function parseMacBattery() {
 
 function conditionBadge(cond) {
   const c = cond.toLowerCase();
-  const col = c === 'normal' ? '#68d391' : c === 'fair' ? '#f6e05e' : '#fc8181';
+  const col = c === 'normal' ? '#2f855a' : c === 'fair' ? '#c05621' : '#c53030';
   return `<span style="color:${col};font-weight:600">${cond}</span>`;
 }
 
