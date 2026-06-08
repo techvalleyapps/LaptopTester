@@ -132,6 +132,7 @@ body {
 .w-ctrl     { min-width:58px; }  .w-win      { min-width:52px; }
 .w-alt      { min-width:52px; }  .w-space    { min-width:290px;}
 .w-gap      { min-width:16px;  background:transparent!important; border:none!important; }
+.w-navgap   { flex:1 1 16px; min-width:16px; background:transparent!important; border:none!important; }
 .w-navsp    { min-width:128px; background:transparent!important; border:none!important; }
 .w-keysp    { min-width:40px;  background:transparent!important; border:none!important; }
 
@@ -851,7 +852,7 @@ const kbRowNum = [
   {c:'Backquote',l:'`~'},{c:'Digit1',l:'1!'},{c:'Digit2',l:'2@'},{c:'Digit3',l:'3#'},
   {c:'Digit4',l:'4$'},{c:'Digit5',l:'5%'},{c:'Digit6',l:'6^'},{c:'Digit7',l:'7&'},
   {c:'Digit8',l:'8*'},{c:'Digit9',l:'9('},{c:'Digit0',l:'0)'},{c:'Minus',l:'-_'},
-  {c:'Equal',l:'=+'},{c:'Backspace',l:'⌫ Bksp',w:'w-backspace'},{c:'_g',l:'',w:'w-gap'},
+  {c:'Equal',l:'=+'},{c:'Backspace',l:'⌫ Bksp',w:'w-backspace'},{c:'_g',l:'',w:'w-navgap'},
   {c:'Insert',l:'Ins'},{c:'Home',l:'Home'},{c:'PageUp',l:'PgUp'},
 ];
 const kbRowTab = [
@@ -859,7 +860,7 @@ const kbRowTab = [
   {c:'KeyQ',l:'Q'},{c:'KeyW',l:'W'},{c:'KeyE',l:'E'},{c:'KeyR',l:'R'},{c:'KeyT',l:'T'},
   {c:'KeyY',l:'Y'},{c:'KeyU',l:'U'},{c:'KeyI',l:'I'},{c:'KeyO',l:'O'},{c:'KeyP',l:'P'},
   {c:'BracketLeft',l:'[{'},{c:'BracketRight',l:']}'},{c:'Backslash',l:'\\|',w:'w-backslash'},
-  {c:'_g',l:'',w:'w-gap'},
+  {c:'_g',l:'',w:'w-navgap'},
   {c:'Delete',l:'Del'},{c:'End',l:'End'},{c:'PageDown',l:'PgDn'},
 ];
 const kbRowCaps = [
@@ -867,13 +868,13 @@ const kbRowCaps = [
   {c:'KeyA',l:'A'},{c:'KeyS',l:'S'},{c:'KeyD',l:'D'},{c:'KeyF',l:'F'},{c:'KeyG',l:'G'},
   {c:'KeyH',l:'H'},{c:'KeyJ',l:'J'},{c:'KeyK',l:'K'},{c:'KeyL',l:'L'},
   {c:'Semicolon',l:';:'},{c:'Quote',l:'\'\"'},{c:'Enter',l:'Enter ↵',w:'w-enter'},
-  {c:'_g',l:'',w:'w-gap'},{c:'_g',l:'',w:'w-navsp'},
+  {c:'_g',l:'',w:'w-navgap'},{c:'_g',l:'',w:'w-navsp'},
 ];
 const kbRowShift = [
   {c:'ShiftLeft',l:'⇧ Shift',w:'w-shiftl'},
   {c:'KeyZ',l:'Z'},{c:'KeyX',l:'X'},{c:'KeyC',l:'C'},{c:'KeyV',l:'V'},{c:'KeyB',l:'B'},
   {c:'KeyN',l:'N'},{c:'KeyM',l:'M'},{c:'Comma',l:',<'},{c:'Period',l:'.>'},{c:'Slash',l:'/?'},
-  {c:'ShiftRight',l:'⇧ Shift',w:'w-shiftr'},{c:'_g',l:'',w:'w-gap'},
+  {c:'ShiftRight',l:'⇧ Shift',w:'w-shiftr'},{c:'_g',l:'',w:'w-navgap'},
   {c:'_g',l:'',w:'w-keysp'},{c:'ArrowUp',l:'↑'},{c:'_g',l:'',w:'w-keysp'},
 ];
 
@@ -886,7 +887,7 @@ const kbLayouts = {
       {c:'AltLeft',l:'Alt',w:'w-alt'},{c:'Space',l:'Space',w:'w-space'},
       {c:'AltRight',l:'Alt',w:'w-alt'},{c:'MetaRight',l:'⊞',w:'w-win'},
       {c:'ContextMenu',l:'☰',w:'w-win'},{c:'ControlRight',l:'Ctrl',w:'w-ctrl'},
-      {c:'_g',l:'',w:'w-gap'},
+      {c:'_g',l:'',w:'w-navgap'},
       {c:'ArrowLeft',l:'←'},{c:'ArrowDown',l:'↓'},{c:'ArrowRight',l:'→'},
     ],
   ],
@@ -898,7 +899,7 @@ const kbLayouts = {
       {c:'AltLeft',l:'⌥ opt',w:'w-alt'},{c:'MetaLeft',l:'⌘ cmd',w:'w-win'},
       {c:'Space',l:'Space',w:'w-space'},
       {c:'MetaRight',l:'⌘ cmd',w:'w-win'},{c:'AltRight',l:'⌥ opt',w:'w-alt'},
-      {c:'_g',l:'',w:'w-gap'},
+      {c:'_g',l:'',w:'w-navgap'},
       {c:'ArrowLeft',l:'←'},{c:'ArrowDown',l:'↓'},{c:'ArrowRight',l:'→'},
     ],
   ],
