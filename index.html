@@ -1885,7 +1885,7 @@ const dispPatterns = [
   { n:'Checker',   bg:'repeating-conic-gradient(#000 0% 25%,#fff 0% 50%) 0 0/40px 40px' },
   { n:'Grid',      bg:'linear-gradient(#fff 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#fff 1px,transparent 1px) 0 0/40px 40px,#000' },
 ];
-let dispIdx = -1, dispHudTimer = null;
+let dispIdx = -1, dispHudTimer = null, hzBusy = false;
 
 (function buildDisplayUI() {
   document.getElementById('disp-patterns').innerHTML = dispPatterns.map((p, i) =>
@@ -1913,7 +1913,6 @@ function updateDisplayInfo() {
   measureRefreshRate();
 }
 
-let hzBusy = false;
 function measureRefreshRate() {
   if (hzBusy) return;
   hzBusy = true;
