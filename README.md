@@ -14,6 +14,7 @@ A lightweight, single-file browser tool for testing laptop hardware — no insta
 | 📷 **Camera** | Live webcam preview + device name, resolution, frame rate, aspect ratio, facing mode |
 | 🔊 **Sound** | Tone generator for Bass / Low Mids / Mids / High Mids / Treble / White Noise; Left · Right · Both channel selector; custom frequency + wave type |
 | 🔋 **Battery** | Live Battery API data (level, charging, time estimates) + health calculator using `powercfg` values + one-click copy for useful Windows commands |
+| 🖥️ **Display** | Fullscreen patterns (black, white, R/G/B, gray, gradient, colour bars, checker, grid) to spot dead/stuck pixels, backlight bleed and banding; plus resolution, pixel ratio, colour depth, HDR/gamut and measured refresh rate |
 
 ---
 

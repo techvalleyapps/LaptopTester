@@ -90,6 +90,28 @@ body {
 .btn-download  { background: #e2e8f0; color: #2b6cb0; border: 1px solid #3182ce; }
 .btn-download:hover  { background: #2b6cb0; color: #fff; }
 
+/* ─────────────────── DISPLAY ─────────────────── */
+.disp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:.75rem; }
+.disp-swatch {
+  border:1px solid #cbd5e0; border-radius:.5rem; cursor:pointer; overflow:hidden;
+  background:#fff; padding:0; font-size:.75rem; font-weight:500; color:#1a202c; text-align:center;
+  transition: transform .1s, box-shadow .15s;
+}
+.disp-swatch:hover { transform:translateY(-2px); box-shadow:0 3px 8px rgba(0,0,0,.15); }
+.disp-swatch i { display:block; height:56px; border-bottom:1px solid #cbd5e0; }
+.disp-swatch span { display:block; padding:.4rem .25rem; }
+.disp-info { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:.75rem; }
+.disp-info div { background:#f7fafc; border:1px solid #e2e8f0; border-radius:.5rem; padding:.625rem .875rem; font-size:.8125rem; color:#718096; }
+.disp-info strong { display:block; color:#1a202c; font-size:.9375rem; margin-top:.15rem; }
+#disp-overlay { display:none; position:fixed; inset:0; z-index:9999; cursor:pointer; outline:none; }
+#disp-overlay.on { display:block; }
+#disp-hud {
+  position:absolute; left:50%; bottom:1.25rem; transform:translateX(-50%);
+  background:rgba(0,0,0,.65); color:#fff; padding:.4rem .9rem; border-radius:9999px;
+  font-size:.75rem; pointer-events:none; opacity:1; transition:opacity .6s; white-space:nowrap;
+}
+#disp-hud.hide { opacity:0; }
+
 .flex-row { display: flex; gap: .625rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
 
 /* ─────────────────── KEYBOARD ─────────────────── */
@@ -394,7 +416,7 @@ kbd {
   <span class="header-logo">🔧</span>
   <div>
     <div class="header-title">LaptopTester</div>
-    <div class="header-sub">Keyboard · Camera · Sound · Battery — all in your browser</div>
+    <div class="header-sub">Keyboard · Camera · Sound · Battery · Display — all in your browser</div>
   </div>
 </div>
 
@@ -403,6 +425,7 @@ kbd {
   <button class="tab-btn"        data-tab="camera">📷 Camera</button>
   <button class="tab-btn"        data-tab="sound">🔊 Sound</button>
   <button class="tab-btn"        data-tab="battery">🔋 Battery</button>
+  <button class="tab-btn"        data-tab="display">🖥️ Display</button>
 </div>
 
 <div class="content">
@@ -783,6 +806,31 @@ kbd {
     </div>
 
   </div><!-- /panel-battery -->
+
+  <!-- ══════════ DISPLAY ══════════ -->
+  <div id="panel-display" class="panel">
+    <div class="card">
+      <div class="card-title">🖥️ Display Test</div>
+      <div class="card-desc">Check for dead / stuck pixels, backlight bleed, uneven colour and banding. Pick a pattern to go fullscreen — click or press → / ← to change pattern, Esc to exit.</div>
+      <div class="disp-grid" id="disp-patterns"></div>
+      <div class="flex-row" style="margin-top:1rem">
+        <button class="btn btn-primary" onclick="startDisplayTest(0)">▶ Start Full Test</button>
+      </div>
+      <div class="notice-box" style="margin-top:.5rem">
+        Tip: view each solid colour closely. A pixel that stays black on a white/colour screen is <strong>dead</strong>; a pixel stuck on a colour on a black screen is <strong>stuck</strong>. Dark-room testing makes backlight bleed on black easier to spot.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Display Info</div>
+      <div class="card-desc">Reported by your browser — may differ from the panel's native specs.</div>
+      <div class="disp-info" id="disp-info"></div>
+    </div>
+  </div><!-- /panel-display -->
+
+  <div id="disp-overlay" tabindex="-1">
+    <div id="disp-hud"></div>
+  </div>
 
 </div><!-- /content -->
 
@@ -1821,6 +1869,107 @@ function resetMacAnalyser() {
     switchCmdOS('mac');
   }
 })();
+
+/* ══════════════════════════════════════
+   DISPLAY TEST
+══════════════════════════════════════ */
+const dispPatterns = [
+  { n:'Black',     bg:'#000' },
+  { n:'White',     bg:'#fff' },
+  { n:'Red',       bg:'#f00' },
+  { n:'Green',     bg:'#0f0' },
+  { n:'Blue',      bg:'#00f' },
+  { n:'Gray 50%',  bg:'#808080' },
+  { n:'Gradient',  bg:'linear-gradient(90deg,#000,#fff)' },
+  { n:'Color Bars',bg:'linear-gradient(90deg,#fff 0 12.5%,#ff0 0 25%,#0ff 0 37.5%,#0f0 0 50%,#f0f 0 62.5%,#f00 0 75%,#00f 0 87.5%,#000 0)' },
+  { n:'Checker',   bg:'repeating-conic-gradient(#000 0% 25%,#fff 0% 50%) 0 0/40px 40px' },
+  { n:'Grid',      bg:'linear-gradient(#fff 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#fff 1px,transparent 1px) 0 0/40px 40px,#000' },
+];
+let dispIdx = -1, dispHudTimer = null;
+
+(function buildDisplayUI() {
+  document.getElementById('disp-patterns').innerHTML = dispPatterns.map((p, i) =>
+    `<button class="disp-swatch" onclick="startDisplayTest(${i})"><i style="background:${p.bg}"></i><span>${p.n}</span></button>`
+  ).join('');
+  updateDisplayInfo();
+  window.addEventListener('resize', updateDisplayInfo);
+})();
+
+function updateDisplayInfo() {
+  const s = screen, dpr = window.devicePixelRatio || 1;
+  const items = [
+    ['Screen resolution', `${s.width} × ${s.height}`],
+    ['Native (physical) pixels', `${Math.round(s.width*dpr)} × ${Math.round(s.height*dpr)}`],
+    ['Browser viewport', `${innerWidth} × ${innerHeight}`],
+    ['Pixel ratio (scaling)', `${dpr} (${Math.round(dpr*100)}%)`],
+    ['Color depth', `${s.colorDepth}-bit`],
+    ['Orientation', (s.orientation && s.orientation.type) || (innerWidth >= innerHeight ? 'landscape' : 'portrait')],
+    ['HDR / wide gamut', `${matchMedia('(dynamic-range: high)').matches ? 'HDR' : 'SDR'} · ${matchMedia('(color-gamut: p3)').matches ? 'P3' : matchMedia('(color-gamut: srgb)').matches ? 'sRGB' : 'unknown'}`],
+    ['Touch screen', navigator.maxTouchPoints > 0 ? `Yes (${navigator.maxTouchPoints} points)` : 'No'],
+  ];
+  const el = document.getElementById('disp-info');
+  el.innerHTML = items.map(([k, v]) => `<div>${k}<strong>${esc(String(v))}</strong></div>`).join('') +
+    '<div>Refresh rate<strong id="disp-hz">measuring…</strong></div>';
+  measureRefreshRate();
+}
+
+let hzBusy = false;
+function measureRefreshRate() {
+  if (hzBusy) return;
+  hzBusy = true;
+  const t = [];
+  requestAnimationFrame(function step(now) {
+    t.push(now);
+    if (t.length < 60) return requestAnimationFrame(step);
+    hzBusy = false;
+    const d = t.slice(1).map((v, i) => v - t[i]).sort((a, b) => a - b);
+    const med = d[Math.floor(d.length / 2)];
+    const el = document.getElementById('disp-hz');
+    if (el) el.textContent = `≈ ${Math.round(1000 / med)} Hz`;
+  });
+}
+
+function showDispPattern(i) {
+  const ov = document.getElementById('disp-overlay');
+  dispIdx = (i + dispPatterns.length) % dispPatterns.length;
+  const p = dispPatterns[dispIdx];
+  ov.style.background = p.bg;
+  const hud = document.getElementById('disp-hud');
+  hud.textContent = `${p.n} (${dispIdx + 1}/${dispPatterns.length}) · click or ← → to change · Esc to exit`;
+  hud.classList.remove('hide');
+  clearTimeout(dispHudTimer);
+  dispHudTimer = setTimeout(() => hud.classList.add('hide'), 2500);
+}
+
+function startDisplayTest(i) {
+  const ov = document.getElementById('disp-overlay');
+  ov.classList.add('on');
+  showDispPattern(i);
+  if (ov.requestFullscreen) ov.requestFullscreen().catch(() => {});
+  ov.focus();
+}
+
+function stopDisplayTest() {
+  document.getElementById('disp-overlay').classList.remove('on');
+  dispIdx = -1;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+}
+
+document.getElementById('disp-overlay').addEventListener('click', () => {
+  if (dispIdx === dispPatterns.length - 1) stopDisplayTest(); else showDispPattern(dispIdx + 1);
+});
+document.addEventListener('keydown', e => {
+  if (dispIdx < 0) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') showDispPattern(dispIdx + 1);
+  else if (e.key === 'ArrowLeft') showDispPattern(dispIdx - 1);
+  else if (e.key === 'Escape') stopDisplayTest();
+  else return;
+  e.preventDefault();
+});
+// Leaving browser fullscreen (e.g. Esc) also closes the overlay
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && dispIdx >= 0) stopDisplayTest();
+});
 
 initBattery();
 enumerateMics(); // pre-populate mic list if permission already granted
